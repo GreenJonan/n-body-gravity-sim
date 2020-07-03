@@ -2,6 +2,7 @@
 
 ## About ##
 This project is a numerical simulation of the motion of objects given Newtonian forces acting on them.
+The project is implemented in Python.
 
 ### Forces ###
 The following forces that act on the bodies are,
@@ -9,6 +10,7 @@ The following forces that act on the bodies are,
  - [ ] Gravity 
  - [ ] Electric
  - [ ] Collision
+ - [ ] Resistance
 
 
 The forces in general are inverse square laws,
@@ -20,7 +22,27 @@ where k force coefficient, b1 & b2 depend on objects 1 & 2, and r is the distanc
 The objects obeys Newton's laws, which means F = ma
 
 The force an object experiences, depends on the sum of all the forces felt between itself and all the other objects. 
-This may also be expressed in terms of the idea of fields, in that to calculate the sum of forces an object experiences, 'remove' the object and construct the field from all the remaining objects. The object then interacts with this field and experiences a force.
+This may also be expressed in terms of the idea of fields, in that  the sum of forces an object experiences is found by computing the interaction between the field and the object. The field is constructed indepently of the object, say object 1, and in general is given by F/b1.
 
+
+The motion of the objects is calculated via Euler ~~Runge-Kutte~~ Method, and the metric r is the Euler Distance metric.
+
+F(x,v) = F_G + F_E
+
+
+The visualisation of the objects motion is implemented via the [Pygame](https://www.pygame.org/wiki/about) module. The motion of objects will be in two-dimensions.
+
+
+
+## Things to implement ##
+ - Multi-dimensional motion (objects moves in more than two-dimensions)
+
+
+
+
+## Related Project Ideas ##
+ - Objects (balls) tethered together by a string. If one ball moves, then it drags along the other tethered objects.
+ - Velocity field visualisation.
+ - Bouncing particles in a box.
 
 
