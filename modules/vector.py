@@ -129,6 +129,17 @@ class Vector:
     #####   SPECIAL FUNCTIONS
     #####
 
+    #####   Generating special vectors
+    
+    @staticmethod
+    def zero_vector(dim:int):
+        if dim < 1:
+            raise ValueError("Error: Vector dimension undefined for dim={0}".format(dim))
+        return Vector([0] * dim)
+
+
+
+
 
     #####   Metric and Distance functions.
 
@@ -158,6 +169,7 @@ class Vector:
         <V,U> = n_root( |v1-u1|^n + |v2-u2|^n + ... + |vn-un|^n )
         
         Notice that this is the generalised form of the euclid and manhattan metric functions.
+        Interesting property: as N->infty it appears the metric approach some value.
         """
         val = 0
         n = len(vec1)
@@ -181,6 +193,8 @@ class Vector:
         else:
             # default metric.
             return Vector.euclid_metric(vec1,vec2)
+
+            #return Vector.general_n_euclid_metric(vec1,vec2,250)
 
     @staticmethod
     def distance(v1,v2):
@@ -221,11 +235,11 @@ class Vector:
 
     @staticmethod
     def random_ball_vector(dim:int, max_radius):
-        return Vector( rnd_sphere(dim, max_radius) )
+        return Vector( rnd_sphere.muller_n_ball(dim, max_radius) )
 
     @staticmethod
     def random_sphere_vector(dim:int, r=1):
-        return Vector ( rnd_sphere(dim, r) )
+        return Vector ( rnd_sphere.muller_n_sphere(dim, r) )
 
 
 
@@ -244,8 +258,21 @@ class Vector:
 
 
 if __name__ == "__main__":
-    v1 = Vector([0,1,2,3,4])
-    v2 = Vector([1,3,6,2,5])
-    print(v1, "+", v2, "=", v1+v2)
+    #v1 = Vector([0,1,2,3,4])
+    #v2 = Vector([1,3,6,2,5])
+    
+    r = 3
+    v1 = Vector((-0.486*r, -0.874*r)) #Vector.random_sphere_vector(2)
+    v2 = Vector((0.163*r, 0.987*r)) #Vector.random_sphere_vector(2)
+    #print(v1, "+", v2, "=", v1+v2)
     print("distance:", Vector.distance(v1,v2))
+
+    import matplotlib.pyplot as plt
+    plt.figure()
+    plt.plot(v1.components[0],v1.components[1], 'ro')
+    plt.plot(v2.components[0],v2.components[1], 'go')
+    
+    plt.plot([-1*r,-1*r,1*r,1*r],[1*r,-1*r,-1*r,1*r],'k')
+
+    plt.show()
 
