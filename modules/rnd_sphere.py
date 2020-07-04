@@ -1,9 +1,18 @@
 import random as rnd
 import math
 
+"""
+IMPORTANT, READ ME:
+    spherical and ball sampling appears to work correctly, 
+        however I'm uncertain whether the elliptical sampling is correct.
+    I think it is not uniform over the area and more points are generated over the shorter axii
+        then the longer axii. However, they do form an ellipse.
+"""
+
+
 
 """
-This method is technically not correct. 
+The first method is technically not correct.
 Look at: http://extremelearning.com.au/how-to-generate-uniformly-random-points-on-n-spheres-and-n-balls/
 
 
@@ -158,7 +167,7 @@ def muller_n_ellipse(dim:int, radii:list):
 
 
 if __name__ == "__main__":
-    N = 100
+    N = 500
     
     import matplotlib.pyplot as plt
     
@@ -178,14 +187,15 @@ if __name__ == "__main__":
 
     fig2 = plt.figure()
     ax2 = fig2.add_subplot(111,projection="3d")
+    #ax2 = fig2.add_subplot(111)
     i = 0
     while i < N:
         v = muller_n_sphere(3)
         #v = muller_n_ball(3)
-        #v = muller_n_ellipse(3, [1,2,3])
-        ax2.scatter(v[0], v[1], v[2])
+        #v = muller_n_ellipse(3, [5,2.5,3])
+        ax2.scatter(v[0], v[1],v[2])
         i += 1
-
+    #plt.axis('scaled')
 
     plt.show()
 
