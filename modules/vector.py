@@ -6,6 +6,7 @@ Vectors have length in n-dimensions, and behave as expected.
 
 import math
 import random as rnd
+import rnd_sphere
 
 
 class Vector:
@@ -217,6 +218,15 @@ class Vector:
     TO IMPLEMENT: Random circle/spherical vectors (max_length, not max_component)
     likewise for elliptical points.
     """
+
+    @staticmethod
+    def random_ball_vector(dim:int, max_radius):
+        return Vector( rnd_sphere(dim, max_radius) )
+
+    @staticmethod
+    def random_sphere_vector(dim:int, r=1):
+        return Vector ( rnd_sphere(dim, r) )
+
 
 
 

@@ -111,7 +111,7 @@ This function appears to produce far less clumping than the previous method.
 I don't understand why but it appears to work.
 """
 
-def muller_n_sphere(dim:int=2):
+def muller_n_sphere(dim:int=2, r=1):
     # this is form Method 19 of the link above.
     if dim <= 0:
         raise ValueError("Error: Dimension undefined: {0}".format(dim))
@@ -127,7 +127,7 @@ def muller_n_sphere(dim:int=2):
 
     i = 0
     while i < dim:
-        vec[i] = vec[i] / d
+        vec[i] = r*vec[i] / d
         i += 1
     return vec
 
