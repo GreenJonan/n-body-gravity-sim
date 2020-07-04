@@ -137,6 +137,25 @@ def muller_n_ball(dim:int=2, radius:float=1.0):
 
 
 
+def muller_n_ellipse(dim:int, radii:list):
+    if len(radii) != dim:
+        raise ValueError("Error: Number of ellipse radii, {0}, do not match dimension of vector, {1}".format(len(radii), dim))
+    sphere = muller_n_sphere(dim)
+    R = rnd.random() ** (1/dim)
+    i = 0
+    while i < dim:
+        Rad = radii[i]
+        if Rad < 0:
+            raise ValueError("Error: Radius must be positive; {0}".format(Rad))
+        # scale radius by ellipse radius
+        r = R * Rad
+        sphere[i] = sphere[i] * r
+        i += 1
+    return sphere
+
+
+
+
 
 if __name__ == "__main__":
     N = 100
@@ -163,6 +182,7 @@ if __name__ == "__main__":
     while i < N:
         v = muller_n_sphere(3)
         #v = muller_n_ball(3)
+        #v = muller_n_ellipse(3, [1,2,3])
         ax2.scatter(v[0], v[1], v[2])
         i += 1
 
