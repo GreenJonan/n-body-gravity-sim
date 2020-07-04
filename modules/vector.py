@@ -124,7 +124,49 @@ class Vector:
 
 
 
-    #####   Metric and Distance function.
+    #####
+    #####   SPECIAL FUNCTIONS
+    #####
+
+
+    #####   Metric and Distance functions.
+
+    @staticmethod
+    def euclid_metric(vec1,vec2):
+        # assume both obejcts are vectors
+        # <V,U> = ||V - U|| = || (v1-u1)^2 + (v2-u2)^2 + ... + (vn-un)^2||
+        V2 = vec1 - vec2
+        return V2.norm()
+
+    @staticmethod
+    def manhattan_metric(vec1,vec2):
+        # assume both obejcts are vectors
+        # <V,U> = |v1-u1| + |v2-u2| + ... + |vn-un|
+        val = 0
+        n = len(vec1)
+        i = 0
+        while i < n:
+            val += abs(vec1.components[i] - vec2.components[i])
+            i += 1
+        return val
+
+    @staticmethod
+    def general_n_euclid_metric(vec1,vec2, N):
+        """
+        assume both obejcts are vectors
+        <V,U> = n_root( |v1-u1|^n + |v2-u2|^n + ... + |vn-un|^n )
+        
+        Notice that this is the generalised form of the euclid and manhattan metric functions.
+        """
+        val = 0
+        n = len(vec1)
+        i = 0
+        while i < n:
+            val += abs(vec1.components[i] - vec2.components[i]) ** N
+            i += 1
+        return val **(1.0/N)
+
+
 
     @staticmethod
     def metric(vec1,vec2):
@@ -136,9 +178,8 @@ class Vector:
         elif Vector.vector_len_error(vec1, vec2):
             pass
         else:
-            # default metric.   ||V - U|| = || (v1-u1)^2 + (v2-u2)^2 + ... + (vn-un)^2||
-            V2 = vec1 - vec2
-            return V2.norm()
+            # default metric.
+            return Vector.euclid_metric(vec1,vec2)
 
     @staticmethod
     def distance(v1,v2):
@@ -147,12 +188,36 @@ class Vector:
 
 
     #####   Random vectors
+
+    def random_float_vector(dim:int):
+        """
+        Generate a vector with dimension :dim: and components from [0,1]
+        """
+        if dim <= 0:
+            raise ValueError("Error: Vector dimension not implemented for: dim = {0}".format(dim))
+        else:
+            vec = [0] * dim
+            i = 0
+            while i < n:
+                vec[i] = rnd.random()
+                i += 1
+            return Vector(vec)
+
+
     @staticmethod
-    def random_int_vector(dim:int,max_val:int):
+    def random_vector(dim:int,max_val:int):
         """
-        Generate a random vector
+        Generate a random vector with vector elements from [0,max_val)
         """
-        return NotImplemented
+        return Vector.random_float_vector(dim) * (max_val)
+
+
+
+    """
+    TO IMPLEMENT: Random circle/spherical vectors (max_length, not max_component)
+    likewise for elliptical points.
+    """
+
 
 
     #####   Errors:
