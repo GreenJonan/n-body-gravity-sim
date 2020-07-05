@@ -6,7 +6,8 @@ Vectors have length in n-dimensions, and behave as expected.
 
 import math
 import random as rnd
-import rnd_sphere
+#import rnd_sphere
+from modules import rnd_sphere
 
 
 class Vector:

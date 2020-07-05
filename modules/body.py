@@ -2,10 +2,13 @@
 This module outlines the 'body' object. These objects are the particles of the simulation.
 Forces act on these objects, and they generate a field around them.
 """
-import vector
-import metrics
-import constants
-#import universe
+from modules import vector
+from modules import metrics
+from modules import constants
+
+#import vector
+#import metrics
+#import constants
 
 
 class Body:

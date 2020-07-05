@@ -5,9 +5,13 @@ Treat all the bodies as a universe. Have reference to each body.
 For all bodies generated into the universe, they have an id number.
 Every time a body is created, the max_id values increases.
 """
-import body
-import vector
-import constants
+#import body
+#import vector
+#import constants
+
+from modules import body
+from modules import vector
+from modules import constants
 
 
 
@@ -204,9 +208,7 @@ class Universe:
         i = 0
         while i < N:
             bod = self.bodies[i]
-            if bod == None:
-                pass
-            else:
+            if isinstance(body.Body, bod):
                 # Apply numeric method
                 self.runge_kutta_method(bod, t)
                 

@@ -11,8 +11,11 @@ Note:
 
 
 
-import vector as v
-import constants
+#import vector as v
+#import constants
+from modules import vector as v
+from modules import constants
+
 Vec = v.Vector
 
     

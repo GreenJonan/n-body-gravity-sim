@@ -1,5 +1,6 @@
 import pygame
-import body as b, universe as u, vector as v, constants as c
+import modules.body as b, modules.universe as u, modules.vector as v, modules.constants as c
+#import body as b, universe as u, vector as v, constants as c
 import math
 
 """
