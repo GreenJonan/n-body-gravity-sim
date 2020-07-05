@@ -1,6 +1,7 @@
 import pygame
-import modules.body as b, modules.universe as u, modules.vector as v, modules.constants as c
-#import body as b, universe as u, vector as v, constants as c
+import modules.body as b, modules.universe as u, modules.vector as v,\
+    modules.constants as c, modules.colour as col
+#import body as b, universe as u, vector as v, constants as c, colour as col
 import math
 
 """
@@ -123,8 +124,8 @@ if __name__ == "__main__":
     #bod = b.Body()
     zero2 = v.Vector.zero_vector(2)
     uni = u.Universe(zero2 )
-    uni.add_body(zero2, zero2, r=20, colour=c.green)
-    uni.add_body(v.Vector([100,-50]), zero2, r=20, colour=c.blue)
+    uni.add_body(zero2, zero2, r=20, colour=col.green)
+    uni.add_body(v.Vector([100,-50]), zero2, r=20, colour=col.blue)
 
     UScreen.update_projection(uni)
 
