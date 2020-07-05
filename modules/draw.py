@@ -31,6 +31,8 @@ class UniverseScreen:
         Take possible projections as planes formed by the standard basis vectors.
         
         Centre is given as offset in pixels such that the x,y vector corresponds to the centre of the screen.
+        
+        scale is: scale unit = 1 pixel. Hence pixels = vals / scale
         """
         
         C = U.centre
@@ -68,9 +70,15 @@ class UniverseScreen:
     ####  BODY
 
     def draw_2dprojection_body(self, body:b.Body):
-        # scale is: scale unit = 1 pixel. Hence pixels = vals / scale
-        # assume projection is well defined, call draw_body from draw_universe
-        # centre_px is centre in terms of pixels
+        """
+        Draw a body on a 2d plane by projecting its vector components onto two of the standard axes.
+        The planes are given by self.proj = (x_proj, y_proj)
+        
+        Shift position of body to centre of the screen, 
+        & use -y so that decreasing numbers go down the page.
+        :input: Body object
+        :return: None - but draw object
+        """
         
         X = body.X
         x,y=0,0
@@ -79,7 +87,7 @@ class UniverseScreen:
         y = self.get_pixel(X.components[self.proj[1]])
         r = math.ceil(body.radius / self.scale)
 
-        pygame.draw.circle(self.screen, body.colour, (x + self.centre[0], y + self.centre[1]), r)
+        pygame.draw.circle(self.screen, body.colour, (x + self.centre[0], -y + self.centre[1]), r)
 
 
 
@@ -95,6 +103,7 @@ class UniverseScreen:
     def draw_2dprojection_universe(self, U:u.Universe):
         """
         Given a universe object, draw all possible objects on the screen.
+        This is done by calling draw_2dprojection_body object for each body object.
         """
         
         self.screen.fill(self.colour)
@@ -111,8 +120,10 @@ if __name__ == "__main__":
     UScreen = UniverseScreen()
 
     #bod = b.Body()
-    uni = u.Universe(1, v.Vector([0,0]))
-    uni.add_body(v.Vector([0,0]), v.Vector([0,0]), r=10)
+    zero2 = v.Vector.zero_vector(2)
+    uni = u.Universe(1, zero2 )
+    uni.add_body(zero2, zero2, r=20, colour=c.green)
+    uni.add_body(v.Vector([100,-50]), zero2, r=20, colour=c.blue)
 
     UScreen.update_projection(uni)
 
@@ -126,4 +137,5 @@ if __name__ == "__main__":
 
         pygame.display.update()
 
+    pygame.quit()
 
