@@ -1,12 +1,31 @@
 """
 This module is just contains various constants
 """
+import math
 
+pi = math.pi
+au_scale = 1.496e8*1000 #metres
+scale = au_scale/300  # metres = 1pixel
 
-G_const = 1 # Gravity constant
-E_const = 1 # Electric constant
+G_const = 6.67430e-11 # Gravity constant
+
+E_const = (1/(4*pi* 8.8541878128))*(10**12) # Electric constant
+
 R_const = 1 # Resistance constant
-dist_error = 0.000001
-time_delay = 100 # how long to wait between each screen refresh in miliseconds
+
+
+
+sun_mass = 1.9884e30
+earth_mass = 5.9722e24
+earth_speed = 29800
+
+screen_width = 1200
+screen_height = 900
+
+dist_error = 0.001
+time_delay = int(1000/60) # how long to wait between each screen refresh in miliseconds
 update_num = 1 # how many updates to compute before screen refresh
 
+year = 60*60*24*365  #ideally 365, however accounting for lag
+time_step = (year/60)*(time_delay/1000)*((9*60+15)/(60*6))
+# expected to take one minute to complete an orbit

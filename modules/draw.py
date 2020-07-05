@@ -117,6 +117,30 @@ class UniverseScreen:
 
 
 
+    #####  Message Function
+
+    def message(self, text:str, font_size:int=18, colour:tuple=col.black, background_colour=None):
+        default_font = pygame.font.get_default_font()
+        font = pygame.font.SysFont(default_font, font_size)
+        
+        antialising = False
+        text_screen = font.render(text, antialising, colour, background_colour)
+        return text_screen
+
+    def write_message(self, text:str, font_size:int=12,
+                      text_colour:tuple=col.black, background_colour=col.white):
+        text_screen = self.message(text, font_size, text_colour, background_colour)
+
+        text_width = text_screen.get_width()
+        text_height = text_screen.get_height()
+        x = int(self.centre[0] - (text_width/2))
+        y = int(self.centre[1] - (text_height/2))
+        self.screen.blit(text_screen, (x,y))
+
+
+
+
+
 if __name__ == "__main__":
     pygame.init()
     UScreen = UniverseScreen()

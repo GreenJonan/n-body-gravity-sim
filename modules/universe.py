@@ -59,24 +59,24 @@ class Universe:
         :return: vector
         """
 
-        body = self.get_body(body_id)
-        n = len(body.X)
+        bod = self.get_body(body_id)
+        n = len(bod.X)
         field = vector.Vector.zero_vector(n)
 
-        if body.mass == 0:
+        if bod.mass == 0:
             pass
         else:
             N = len(self.bodies)
             i = 0
             while i < N:
                 other_body = self.bodies[i]
-                if other_body == None:
-                    pass # body removed
-                elif other_body.id == body_id:
-                    pass # dont compute field between self
-                else:
-                    tmp_field = other_body.gravity_field(X)
-                    field = tmp_field + field
+                
+                if isinstance(other_body, body.Body):
+                    if other_body.id == body_id:
+                        pass # dont compute field between self
+                    else:
+                        tmp_field = other_body.gravity_field(X)
+                        field = tmp_field + field
                 i += 1
         return field
 
@@ -88,24 +88,24 @@ class Universe:
         :return: vector
         """
 
-        body = self.get_body(body_id)
-        n = len(body.X)
+        bod = self.get_body(body_id)
+        n = len(bod.X)
         field = vector.Vector.zero_vector(n)
         
-        if body.charge == 0:
+        if bod.charge == 0:
             pass
         else:
             N = len(self.bodies)
             i = 0
             while i < N:
                 other_body = self.bodies[i]
-                if other_body == None:
-                    pass # body removed
-                elif other_body.id == body_id:
-                    pass # dont compute field between self
-                else:
-                    tmp_field = other_body.electric_field(X)
-                    field = tmp_field + field
+                
+                if isinstance(other_body, body.Body):
+                    if other_body.id == body_id:
+                        pass # dont compute field between self
+                    else:
+                        tmp_field = other_body.electric_field(X)
+                        field = tmp_field + field
                 i += 1
         return field
 
@@ -117,22 +117,22 @@ class Universe:
         """
         Given a body, calculate the net gravity field
         """
-        body = self.get_body(body_id)
-        if body == None:
+        bod = self.get_body(body_id)
+        if bod == None:
             raise TypeError("Error: Cannot compute gravity force for None Object.")
 
-        return body.mass * self.net_gravity_field(body_id, X)
+        return bod.mass * self.net_gravity_field(body_id, X)
 
 
     def net_electric_force(self, body_id:int, X:vector.Vector):
         """
         Given a body, calculate the net electric field
         """
-        body = self.get_body(body_id)
-        if body == None:
+        bod = self.get_body(body_id)
+        if bod == None:
             raise TypeError("Error: Cannot compute gravity force for None Object.")
                         
-        return body.charge * self.net_electric_field(body_id, X)
+        return bod.charge * self.net_electric_field(body_id, X)
 
 
 
@@ -140,11 +140,11 @@ class Universe:
         """
         Given a body, find the total force it experiences.
         """
-        body = self.get_body(body_id)
+        bod = self.get_body(body_id)
         F = self.net_gravity_force(body_id, X) + self.net_electric_force(body_id, X)
 
         if self.resistance:
-            F = F + body.resistance_force(V)
+            F = F + bod.resistance_force(V)
         return F
 
 
@@ -173,8 +173,10 @@ class Universe:
         :input:  Body object, and t - time step (h in above equations)
         :return: None, update body direction only
         """
+        force = self.net_force(obj.id, obj.X, obj.V)
+        #print("Inital Force:",force)
 
-        kv1 = self.net_force(obj.id, obj.X, obj.V) *( 1 / obj.mass)
+        kv1 = force *( 1 / obj.mass)
         kx1 = obj.V
 
         kv2 = self.net_force(obj.id, obj.X + kx1*(t/2), obj.V + kv1*(t/2)) *( 1 / obj.mass)
@@ -186,9 +188,14 @@ class Universe:
         kv4 = self.net_force(obj.id, obj.X + kx3*t, obj.V + kv3*t) *( 1 / obj.mass)
         kx4 = obj.V + kv3*t
 
-
-        new_v = obj.V + (t/6) * (kv1 + 2*kv2 + 2*kv3 + kv4)
-        new_x = obj.X + (t/6) * (kx1 + 2*kx2 + 2*kx3 + kx4)
+        #new_v = obj.V + (t/6) * (kv1 + 2*kv2 + 2*kv3 + kv4)
+        #new_x = obj.X + (t/6) * (kx1 + 2*kx2 + 2*kx3 + kx4)
+        
+        del_v = (t/6) * (kv1 + 2*kv2 + 2*kv3 + kv4)
+        del_x = (t/6) * (kx1 + 2*kx2 + 2*kx3 + kx4)
+        
+        new_v = obj.V + del_v
+        new_x = obj.X + del_x
 
         # Update Position and Velocity Vectors
         obj.X_prev = obj.X
@@ -196,6 +203,9 @@ class Universe:
 
         obj.X = new_x
         obj.V = new_v
+        
+        #print("Position:",obj.X, obj.X_prev, del_x)
+        #print("Velocity:",obj.V, obj.V_prev, del_v)
         return None
 
 
@@ -205,7 +215,6 @@ class Universe:
         """
         Use numeric methods to update the velocities and positions of ALL of the Body objects.
         """
-
         N = len(self.bodies)
         i = 0
         while i < N:

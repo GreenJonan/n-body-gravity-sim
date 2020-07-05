@@ -8,6 +8,7 @@ from modules import colour
 import random as rnd
 import pygame
 pygame.init()
+pygame.font.init()
 
 
 
@@ -22,11 +23,11 @@ zero_vec = vector.Vector.zero_vector(2)
 
 ### Set up screen
 
-screen_width = 1000
-screen_height = 750
+screen_width = constants.screen_width
+screen_height = constants.screen_height
 
-universe_scale = 10.0
-background_colour = colour.white
+universe_scale = constants.scale
+background_colour = colour.black
 
 uni_screen = draw.UniverseScreen(width=screen_width, height=screen_height,
                                  scale=universe_scale, colour=background_colour)
@@ -34,7 +35,7 @@ uni_screen = draw.UniverseScreen(width=screen_width, height=screen_height,
 
 ### Initialise universe
 uni = universe.Universe(centre=zero_vec)
-time_step = 1
+time_step = constants.time_step
 
 
 ### Set up bodies
@@ -57,20 +58,17 @@ while i < N:
 
 # planet
 
-#X = vector.Vector.random_sphere_vector(dim, max_radius)
-#V = vector.Vector([X.components[0], -X.components[1]])
-X = vector.Vector([universe_scale * 100, 0])
-V = vector.Vector([0, universe_scale * 10])
-m = 50000
-#q = 2*(1 - (rnd.random())/2) * max_charge
+rad = 3*constants.scale
+
+X = vector.Vector([constants.au_scale, 0])
+V = vector.Vector([0, constants.earth_speed])
 q = 0
-r = 100
     
-uni.add_body(X,V, m=m, r=r, q=q, colour=colour.random_rgb())
+uni.add_body(X,V, m=constants.earth_mass, r=rad, q=q, colour=colour.turquoise)
 
 
 # sun
-uni.add_body(zero_vec,zero_vec, m=500*m, r=2*r, q=0, colour=colour.random_rgb())
+uni.add_body(zero_vec,zero_vec, m=constants.sun_mass, r=10*rad, q=0, colour=colour.orange)
 
 
 
@@ -87,21 +85,50 @@ uni_screen.update_projection(uni, projection=(0,1))
 #####
 
 
+loops = -1
+
+start_screen = True
+paused = False
+text_size = 100
+
 run = True
 while run:
-    pygame.time.delay(constants.time_delay)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+        
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                if start_screen:
+                    start_screen = False
+                else:
+                    paused = not paused
+
 
     uni_screen.draw_2dprojection_universe(uni)
+
+    if not start_screen and not paused:
+        i = 0
+        while i < constants.update_num:
+            uni.update_all_bodies(time_step / constants.update_num)
+            i += 1
+
+        earth = uni.bodies[0]
+        pass_start = earth.X.components[1] >= 0 >= earth.X_prev.components[1] and earth.X.components[0] > 0
+        if pass_start:
+            loops += 1
+    elif paused:
+        uni_screen.write_message("Paused", text_size, text_colour=colour.white, background_colour=None)
+    else:
+        uni_screen.write_message("Press SPACE to begin", text_size)
+
+
     pygame.display.update()
-
-    i = 0
-    while i < constants.update_num:
-        uni.update_all_bodies(time_step / constants.update_num)
-        i += 1
+    pygame.time.delay(constants.time_delay)
 
 
+#print("Loops:", loops)
 
+pygame.quit()
+pygame.fonts.quit()
 
