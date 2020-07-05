@@ -5,14 +5,16 @@ Forces act on these objects, and they generate a field around them.
 from modules import vector
 from modules import metrics
 from modules import constants
+from modules import colour
 
 #import vector
 #import metrics
 #import constants
+#import colour
 
 
 class Body:
-    def __init__(self, id, X0, V0, m=1, r=1, q=0, colour=constants.black):
+    def __init__(self, id, X0, V0, m=1, r=1, q=0, colour=colour.black):
         """
         Construct the body object.
         :X0: gives the intial position of the object

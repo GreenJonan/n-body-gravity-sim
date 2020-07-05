@@ -8,10 +8,12 @@ Every time a body is created, the max_id values increases.
 #import body
 #import vector
 #import constants
+#import colour
 
 from modules import body
 from modules import vector
 from modules import constants
+from modules import colour
 
 
 
@@ -24,7 +26,7 @@ class Universe:
         self.conserve_energy = False
     
 
-    def add_body(self, X0, V0, m=1, r=1, q=0, colour=constants.black):
+    def add_body(self, X0, V0, m=1, r=1, q=0, colour=colour.black):
         self.max_id += 1
         new_body = body.Body(self.max_id, X0, V0, m, r, q, colour)
         self.bodies.append(new_body)
