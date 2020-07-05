@@ -1,7 +1,18 @@
 """
 Metric functions given a vector space.
+
+Note:
+    The key two functions are the euclid metric function, which defines distance, 
+    and the inverse square law function, which returns a vector given a metric function.
+    
+    I have also added generalised versions of the euclidean metric and the inverse square law.
+    However, they are not currently used in the main program.
 """
+
+
+
 import vector as v
+import constants
 Vec = v.Vector
 
     
@@ -73,7 +84,7 @@ def inverse_square_law(v1:Vec, v2:Vec):
     :input: Two vectors
     :return: Vector, r_unit / r^2, where r = v2-v1
     """
-    return Vector.inverse_n_law(v1,v2)
+    return inverse_n_law(v1,v2)
 
 
 def inverse_n_law(v1:Vec, v2:Vec, n:int=2):
@@ -84,7 +95,10 @@ def inverse_n_law(v1:Vec, v2:Vec, n:int=2):
         
     :return: Vector
     """
-    D = v.Vector.distance(v1, v2)
+    D = distance(v1, v2)
+    if D <= constants.dist_error:
+        # Return Zero vector
+        return v.Vector.zero_vector(len(v1))
     R = v2 - v1
     return (1/D**(n+1)) * R
 
@@ -97,6 +111,9 @@ def general_inverse_n_law(v1:Vec,v2:Vec, n:int=2, N:int=2):
     """
     
     D = general_n_euclid_metric(v1, v2, N)
+    if D <= constants.dist_error:
+        # Return Zero vector
+        return v.Vector.zero_vector(len(v1))
     R = v2 - v1
     return (1/D**(n+1)) * R
 

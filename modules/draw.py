@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     #bod = b.Body()
     zero2 = v.Vector.zero_vector(2)
-    uni = u.Universe(1, zero2 )
+    uni = u.Universe(zero2 )
     uni.add_body(zero2, zero2, r=20, colour=c.green)
     uni.add_body(v.Vector([100,-50]), zero2, r=20, colour=c.blue)
 

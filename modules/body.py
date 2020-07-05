@@ -5,7 +5,7 @@ Forces act on these objects, and they generate a field around them.
 import vector
 import metrics
 import constants
-
+#import universe
 
 
 class Body:
@@ -28,6 +28,9 @@ class Body:
             self.V = V0
         else:
             self.V = vector.Vector(V0)
+
+        self.X_prev = self.X
+        self.V_prev = self.V
 
         self.mass = m
         self.radius = r
@@ -61,23 +64,35 @@ class Body:
 
     #####  GENERAL FORCES
     
-    def gravity_force(self, t, universe):
-        """
-        Find gravity force at time t.
+    #Dont't re-include electric/grav forces, they are now computed in universe module.
+    """
+    def gravity_force(self, uni:universe.Universe):
+        ###
+        Find gravity force at time t, in universe uni
         
         F = mC, where C is the gravitational field.
-        """
-        return #universe.
+        ###
+        return self.mass * uni.net_gravity_field(self.id)
     
-    def electric_force(self, t):
-        """
+    
+    def electric_force(self, uni:universe.Universe):
+        ###
         Find electric force at time t.
-        """
-        return
+        ###
+        return self.charge * uni.net_electric_field(self.id)
+    """
     
     def resistance_force(self, vel:vector.Vector):
         # F = -R*A*v^2
         area = self.radius * self.radius * math.pi
         return  - R_const * area * vel.norm() * vel
+
+
+
+
+
+
+if __name__ == "__main__":
+    pass
 
 
