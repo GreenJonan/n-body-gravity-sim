@@ -12,17 +12,17 @@ import constants
 
 
 class Universe:
-    def __init__(self, scale, centre:vector.Vector, *bodies):
+    def __init__(self, centre:vector.Vector, *bodies):
         self.bodies = list(bodies)
         self.resistance = False
         self.max_id = len(bodies)
-        self.scale = scale
         self.centre = centre
+        self.conserve_energy = False
     
 
-    def add_body(self, X0, V0, m=1, r=1, q=0):
+    def add_body(self, X0, V0, m=1, r=1, q=0, colour=constants.black):
         self.max_id += 1
-        new_body = body.Body(self.max_id, X0, V0, m, r, q)
+        new_body = body.Body(self.max_id, X0, V0, m, r, q, colour)
         self.bodies.append(new_body)
         return new_body
 
@@ -32,19 +32,30 @@ class Universe:
 
 
 
+    def turn_on_resistance(self):
+        self.resistance = True
+        self.conserve_energy = False
+    
+    def conserve_universe_energy(self):
+        if self.resistance:
+            raise ValueError("Error: Cannot conserve total energy while not-conservative forces are active.")
+        self.conserve_energy = True
+
+
 
 
     #####  FIELDS - for each body object.
 
-    def gravity_field(self, body_id):
+    def net_gravity_field(self, body_id, X:vector.Vector):
         """
-        Calculate the gravitational force an object experiences.
-        That is, find the field at the position given by 'body_id'
+        Calculate the gravitational field at the location of the body.
+        :input: id number for body
+        :return: vector
         """
 
         body = self.get_body(body_id)
         n = len(body.X)
-        field = vector.Vector([0] * n)
+        field = vector.Vector.zero_vector(n)
 
         if body.mass == 0:
             pass
@@ -58,18 +69,178 @@ class Universe:
                 elif other_body.id == body_id:
                     pass # dont compute field between self
                 else:
-                    tmp_field = other_body.gravity_field(body.X)
+                    tmp_field = other_body.gravity_field(X)
                     field = tmp_field + field
                 i += 1
         return field
 
 
-    def electric_field(self, body_id):
+    def net_electric_field(self, body_id, X:vector.Vector):
         """
-        Not implemented.
+        Calculate the electric field at the location of the body.
+        :input: id number for body
+        :return: vector
         """
 
         body = self.get_body(body_id)
         n = len(body.X)
-        field = vector.Vector( [0] * n )
+        field = vector.Vector.zero_vector(n)
+        
+        if body.charge == 0:
+            pass
+        else:
+            N = len(self.bodies)
+            i = 0
+            while i < N:
+                other_body = self.bodies[i]
+                if other_body == None:
+                    pass # body removed
+                elif other_body.id == body_id:
+                    pass # dont compute field between self
+                else:
+                    tmp_field = other_body.electric_field(X)
+                    field = tmp_field + field
+                i += 1
         return field
+
+
+
+    #####  FORCES
+
+    def net_gravity_force(self, body_id:int, X:vector.Vector):
+        """
+        Given a body, calculate the net gravity field
+        """
+        body = self.get_body(body_id)
+        if body == None:
+            raise TypeError("Error: Cannot compute gravity force for None Object.")
+
+        return body.mass * self.net_gravity_field(body_id, X)
+
+
+    def net_electric_force(self, body_id:int, X:vector.Vector):
+        """
+        Given a body, calculate the net electric field
+        """
+        body = self.get_body(body_id)
+        if body == None:
+            raise TypeError("Error: Cannot compute gravity force for None Object.")
+                        
+        return body.charge * self.net_electric_field(body_id, X)
+
+
+
+    def net_force(self, body_id, X:vector.Vector, V:vector.Vector):
+        """
+        Given a body, find the total force it experiences.
+        """
+        body = self.get_body(body_id)
+        F = self.net_gravity_force(body_id, X) + self.net_electric_force(body_id, X)
+
+        if self.resistance:
+            F = F + body.resistance_force(V)
+        return F
+
+
+
+
+    def runge_kutta_method(self, obj:body.Body, t:float):
+        """
+        Update the position and velocity of the object.
+            
+        The method is taken directly from:
+        http://spiff.rit.edu/richmond/nbody/OrbitRungeKutta4.pdf
+        
+        y'=f(y,t) y=y0
+        y_{i+1} = y_{n} + h/6 (k1 + 2*k2 + 2*k3 + k4)
+        
+        where, k1 = f(y,t)   k2 = f(y+k1*h/2, t+h/2)   k3 = f(y+k2*h/2, t+h/2)   k4 = f(t+h, y+k4*h)
+        
+        y'=f(y,t) is interpreted as,
+        v' = f(v,x), v=v0
+        
+        and, 
+        x' = vt
+        
+        where of course v' = a = F/m
+        
+        :input:  Body object, and t - time step (h in above equations)
+        :return: None, update body direction only
+        """
+
+        kv1 = self.net_force(obj.id, obj.X, obj.V) *( 1 / obj.mass)
+        kx1 = obj.V
+
+        kv2 = self.net_force(obj.id, obj.X + kx1*(t/2), obj.V + kv1*(t/2)) *( 1 / obj.mass)
+        kx2 = obj.V + (t/2) * kv1
+
+        kv3 = self.net_force(obj.id, obj.X + kx2*(t/2), obj.V + kv2*(t/2)) *( 1 / obj.mass)
+        kx3 = obj.V + (t/2) * kv2
+
+        kv4 = self.net_force(obj.id, obj.X + kx3*t, obj.V + kv3*t) *( 1 / obj.mass)
+        kx4 = obj.V + kv3*t
+
+
+        new_v = obj.V + (t/6) * (kv1 + 2*kv2 + 2*kv3 + kv4)
+        new_x = obj.X + (t/6) * (kx1 + 2*kx2 + 2*kx3 + kx4)
+
+        # Update Position and Velocity Vectors
+        obj.X_prev = obj.X
+        obj.V_prev = obj.V
+
+        obj.X = new_x
+        obj.V = new_v
+        return None
+
+
+
+
+    def update_all_bodies(self, t:float):
+        """
+        Use numeric methods to update the velocities and positions of ALL of the Body objects.
+        """
+
+        N = len(self.bodies)
+        i = 0
+        while i < N:
+            bod = self.bodies[i]
+            if bod == None:
+                pass
+            else:
+                # Apply numeric method
+                self.runge_kutta_method(bod, t)
+                
+                if self.conserve_energy:
+                    """
+                    Need to implement field potentials and kinetic enegy.
+                    U+K = const, U potential, K kinetic
+                    
+                    """
+                    NotImplemented
+            i += 1
+        return None
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    zero_vec = vector.Vector.zero_vector(2)
+    v1 = vector.Vector([1,0])
+    v2 = vector.Vector([-1,0])
+    
+    b1 = body.Body(1, v1, zero_vec)
+    b2 = body.Body(2, v2, zero_vec)
+    
+    u = Universe(zero_vec, b1, b2)
+    
+    
+    print(u.net_force(b1.id, b1.X, b1.V))
+    i = 0
+    while i < 20:
+        u.runge_kutta_method(b1, 1)
+        print(u.net_force(b1.id, b1.X, b1.V))
+        i += 1
+
