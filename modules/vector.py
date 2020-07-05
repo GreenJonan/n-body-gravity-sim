@@ -16,6 +16,7 @@ class Vector:
         else:
             self.components = tuple(comps)
 
+
     def inner_product(self, other):
         """
            Compute the inner product between two vectors. Assert that both have the same length.
@@ -138,70 +139,6 @@ class Vector:
         return Vector([0] * dim)
 
 
-
-
-
-    #####   Metric and Distance functions.
-
-    @staticmethod
-    def euclid_metric(vec1,vec2):
-        # assume both obejcts are vectors
-        # <V,U> = ||V - U|| = || (v1-u1)^2 + (v2-u2)^2 + ... + (vn-un)^2||
-        V2 = vec1 - vec2
-        return V2.norm()
-
-    @staticmethod
-    def manhattan_metric(vec1,vec2):
-        # assume both obejcts are vectors
-        # <V,U> = |v1-u1| + |v2-u2| + ... + |vn-un|
-        val = 0
-        n = len(vec1)
-        i = 0
-        while i < n:
-            val += abs(vec1.components[i] - vec2.components[i])
-            i += 1
-        return val
-
-    @staticmethod
-    def general_n_euclid_metric(vec1,vec2, N):
-        """
-        assume both obejcts are vectors
-        <V,U> = n_root( |v1-u1|^n + |v2-u2|^n + ... + |vn-un|^n )
-        
-        Notice that this is the generalised form of the euclid and manhattan metric functions.
-        Interesting property: as N->infty it appears the metric approach some value.
-        """
-        val = 0
-        n = len(vec1)
-        i = 0
-        while i < n:
-            val += abs(vec1.components[i] - vec2.components[i]) ** N
-            i += 1
-        return val **(1.0/N)
-
-
-
-    @staticmethod
-    def metric(vec1,vec2):
-        """
-        Find the distance metric between two vectors.
-        """
-        if not isinstance(vec1, Vector) or not isinstance(vec2, Vector):
-            raise ValueError("Error: cannot compute function between {0} and {1}, need both vector types.".format(type(vec1), type(vec2)))
-        elif Vector.vector_len_error(vec1, vec2):
-            pass
-        else:
-            # default metric.
-            return Vector.euclid_metric(vec1,vec2)
-
-            #return Vector.general_n_euclid_metric(vec1,vec2,250)
-
-    @staticmethod
-    def distance(v1,v2):
-        return Vector.metric(v1,v2)
-
-
-
     #####   Random vectors
 
     def random_float_vector(dim:int):
@@ -239,7 +176,7 @@ class Vector:
 
     @staticmethod
     def random_sphere_vector(dim:int, r=1):
-        return Vector ( rnd_sphere.muller_n_sphere(dim, r) )
+        return Vector( rnd_sphere.muller_n_sphere(dim, r) )
 
 
 
@@ -253,6 +190,12 @@ class Vector:
             return True
         else:
             return False
+
+
+
+
+
+
 
 
 
