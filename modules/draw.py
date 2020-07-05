@@ -11,7 +11,7 @@ This module draws the objects.
 
 
 class UniverseScreen:
-    def __init__(self, width=800, height=600, scale=1., colour=c.white):
+    def __init__(self, width=800, height=600, scale=1., colour=col.white):
         self.dims = (width,height)
         self.screen = pygame.display.set_mode(self.dims)
         self.colour = colour

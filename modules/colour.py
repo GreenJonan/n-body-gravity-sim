@@ -67,5 +67,5 @@ def random_rgb():
     """
 
     hsv = HSVColour()
-    hsv.hue = = rnd.random()
-    return hsc.get_rgb()
+    hsv.hue = rnd.random()
+    return hsv.get_rgb()
