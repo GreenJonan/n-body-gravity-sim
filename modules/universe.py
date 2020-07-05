@@ -210,7 +210,7 @@ class Universe:
         i = 0
         while i < N:
             bod = self.bodies[i]
-            if isinstance(body.Body, bod):
+            if isinstance(bod, body.Body):
                 # Apply numeric method
                 self.runge_kutta_method(bod, t)
                 
