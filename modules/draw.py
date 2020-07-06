@@ -6,6 +6,12 @@ import math
 
 """
 This module draws the objects.
+
+track_id refers to the body id that the universe screen will track as the centre of the screen.
+
+ - id < 0 ==> standard (0,0)
+ - id = 0 ==> centre of mass
+ - id > 0 ==> body with body_id id
 """
 
 
@@ -15,13 +21,21 @@ class UniverseScreen:
         self.dims = (width,height)
         self.screen = pygame.display.set_mode(self.dims)
         self.colour = colour
+        self.default_scale = scale
         self.scale = scale
+        self.default_message = None
+        
+        self.screen_centre = (int(width/2), int(height/2))
+        self.track_id = -1
 
         self.centre = None
         self.proj = None
     
     
     def get_pixel(self, x):
+        """
+        scale is: scale unit = 1 pixel. Hence pixels = vals / scale
+        """
         return  int (x/self.scale)
     
     
@@ -31,39 +45,158 @@ class UniverseScreen:
         
         The projection takes the proj[0] and proj[1] part of X, for the position of bodies.
         Take possible projections as planes formed by the standard basis vectors.
-        
-        Centre is given as offset in pixels such that the x,y vector corresponds to the centre of the screen.
-        
-        scale is: scale unit = 1 pixel. Hence pixels = vals / scale
         """
         
-        C = U.centre
-    
         if len(projection) != 2:
             raise ValueError("Error: Length of projection values is not 2, instead {0}".format(len(projection)))
         proj_x = projection[0]
         proj_y = projection[1]
             
-        if proj_x < 0 or proj_x >= len(C):
+        if proj_x < 0 or proj_x >= len(U.centre):
             raise ValueError("Error: Invalid vector component: {0}".format(proj_x))
-        if proj_y < 0 or proj_y >= len(C):
+        if proj_y < 0 or proj_y >= len(U.centre):
             raise ValueError("Error: Invalid vector component: {0}".format(proj_y))
 
         self.proj = (proj_x,proj_y)
+        return self.proj
 
-        c_x = C.components[proj_x]
-        c_y = C.components[proj_y]
-            
-        p_x = self.get_pixel(c_x)
-        p_y = self.get_pixel(c_y)
+
+    def update_centre(self, centre=(0,0)):
+        """
+        Given the centre of the universe, find the pixel off set such that 
+        it corresponds to the centre of the screen.
+        """
+        """
+        p_x = self.get_pixel(centre[0])
+        p_y = self.get_pixel(centre[1])
             
         zero_x = math.ceil(self.dims[0] / 2)
         zero_y = math.ceil(self.dims[1] / 2)
             
         self.centre = ( zero_x - p_x, zero_y - p_y)
         return self.centre
+        """
+        self.centre = centre
+
+
+    def get_origin(self, v:v.Vector):
+        """
+        Given a vector, find the
+        """
+        if self.proj == None:
+            raise ValueError("Error: UniverseScreen projection axes not updated.")
+        
+        proj_x = self.proj[0]
+        proj_y = self.proj[1]
+        
+        c_x = v.components[proj_x]
+        c_y = v.components[proj_y]
             
+        return (c_x, c_y)
+    
+    
+    
+    def update_origin_tracking(self, U:u.Universe):
+        """
+        Given the current object being track, self.track_id, update the pixel centre.
+        """
+    
+        origin = None
+        if self.track_id < 0:
+            return
+        
+        elif self.track_id == 0:
+            origin = self.get_origin(U.get_centre_of_mass())
+    
+        else:
+            body = U.get_body(self.track_id)
+            origin = self.get_origin(body.X)
+                
+        self.update_centre(origin)
+
+
+
+    ####   TRACKING FUNCTIONS
+
+    def track_origin(self):
+        self.track_id = -1
+        self.centre = (0,0)
+
+    def track_centre_of_mass(self, U:u.Universe):
+        self.track_id = 0
+        self.update_origin_tracking(U)
+
+    def track_body(self, U:u.Universe, id):
+        self.track_id = id
+        self.update_origin_tracking(U)
+
+
+
+    def update_tracking(self, U:u.Universe, id:int=-1):
+        if id < 0:
+            self.track_origin()
+        elif id == 0:
+            self.track_centre_of_mass(U)
+        else:
+            self.track_body(U, id)
+
+
+
+    def track_next_object(self, U:u.Universe):
+        """
+        Track the next object in the universe
+        """
+
+        if self.track_id == U.max_id:
+            pass
+        else:
+            new_track = self.track_id +1
+            self.update_tracking(U, new_track)
+
+
+    def track_prev_object(self, U:u.Universe):
+        """
+        Track the previous object in the universe.
+        """
+
+        if self.track_id < 0:
+            pass
+        else:
+            new_track = self.track_id -1
+            self.update_tracking(U, new_track)
+
+
+
+    ####   DRAW TRACKING:
+
+    def draw_tracking_label(self, U:u.Universe, text_size=20):
+        """
+        Draw a label for what body is currently being tracked.
+        If the body has a name, use that instead of the id.
+        """
+    
+        if self.track_id < 0:
+            ## dont draw a label
+            if self.default_message == None:
+                pass
+            else:
+                self.write_message(self.default_message, text_size, centre=False,
+                               text_colour=col.white, background_colour=None)
+        elif self.track_id == 0:
+            self.write_message("Centre of Mass", text_size, centre=False,
+                               text_colour=col.white, background_colour=None)
+        
+        else:
+            body = U.get_body(self.track_id)
+            string = body.name
             
+            if string == "":
+                string = "Body " + str(self.track_id)
+     
+            self.write_message(string, text_size, centre=False,
+                   text_colour=body.colour, background_colour=None)
+    
+    
 
     #####   DRAW PROJECTIONS
     #####
@@ -85,11 +218,13 @@ class UniverseScreen:
         X = body.X
         x,y=0,0
 
-        x = self.get_pixel(X.components[self.proj[0]])
-        y = self.get_pixel(X.components[self.proj[1]])
+        x = self.get_pixel(X.components[self.proj[0]] - self.centre[0])
+        y = self.get_pixel(X.components[self.proj[1]] - self.centre[1])
         r = math.ceil(body.radius / self.scale)
 
-        pygame.draw.circle(self.screen, body.colour, (x + self.centre[0], -y + self.centre[1]), r)
+        pix_centre = (x + self.screen_centre[0], -y + self.screen_centre[1])
+
+        pygame.draw.circle(self.screen, body.colour, pix_centre, r)
 
 
 
@@ -127,14 +262,20 @@ class UniverseScreen:
         text_screen = font.render(text, antialising, colour, background_colour)
         return text_screen
 
-    def write_message(self, text:str, font_size:int=12,
+
+    def write_message(self, text:str, font_size:int=12, centre=True,
                       text_colour:tuple=col.black, background_colour=col.white):
+        
         text_screen = self.message(text, font_size, text_colour, background_colour)
 
         text_width = text_screen.get_width()
         text_height = text_screen.get_height()
-        x = int(self.centre[0] - (text_width/2))
-        y = int(self.centre[1] - (text_height/2))
+        
+        x,y = 0,0
+        if centre:
+            x = int(self.screen_centre[0] - (text_width/2))
+            y = int(self.screen_centre[1] - (text_height/2))
+        
         self.screen.blit(text_screen, (x,y))
 
 

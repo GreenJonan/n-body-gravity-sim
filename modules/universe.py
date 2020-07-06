@@ -26,9 +26,10 @@ class Universe:
         self.conserve_energy = False
     
 
-    def add_body(self, X0, V0, m=1, r=1, q=0, colour=colour.black):
+    def add_body(self, X0, V0, m=1, r=1, q=0, colour=colour.black, name=""):
         self.max_id += 1
-        new_body = body.Body(self.max_id, X0, V0, m, r, q, colour)
+        new_body = body.Body(self.max_id, X0, V0, m=m, r=r, q=q,
+                             colour=colour, name=name)
         self.bodies.append(new_body)
         return new_body
 
@@ -46,6 +47,33 @@ class Universe:
         if self.resistance:
             raise ValueError("Error: Cannot conserve total energy while not-conservative forces are active.")
         self.conserve_energy = True
+
+
+
+    #####  UNIVERSE VECTORS:
+    
+    def get_centre_of_mass(self):
+        N = len(self.bodies)
+        if N == 0:
+            raise ValueError("Error: Unable to compute Centre of Mass, no Objects in Universe.")
+    
+        n = len(self.centre)
+        weighted_centre = vector.Vector.zero_vector(n)
+        mass = 0
+            
+        i = 0
+        while i < N:
+            bod = self.bodies[i]
+            if isinstance(bod, body.Body):
+                mass += bod.mass
+                weighted_centre = weighted_centre + bod.mass * bod.X
+            i += 1
+
+        if mass == 0:
+            return weighted_centre
+        else:
+            return weighted_centre * (1/mass)
+        
 
 
 
@@ -174,7 +202,7 @@ class Universe:
         :return: None, update body direction only
         """
         force = self.net_force(obj.id, obj.X, obj.V)
-        #print("Inital Force:",force)
+        #print("Inital Force:",force, obj.name)
 
         kv1 = force *( 1 / obj.mass)
         kx1 = obj.V
@@ -215,6 +243,7 @@ class Universe:
         """
         Use numeric methods to update the velocities and positions of ALL of the Body objects.
         """
+        #print()
         N = len(self.bodies)
         i = 0
         while i < N:

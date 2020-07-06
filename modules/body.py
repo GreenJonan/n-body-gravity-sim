@@ -14,7 +14,7 @@ from modules import colour
 
 
 class Body:
-    def __init__(self, id, X0, V0, m=1, r=1, q=0, colour=colour.black):
+    def __init__(self, id, X0, V0, m=1, r=1, q=0, colour=colour.black, name=""):
         """
         Construct the body object.
         :X0: gives the intial position of the object
@@ -42,6 +42,8 @@ class Body:
         self.charge = q
         self.id = id
         self.colour = colour
+
+        self.name = name
 
 
 

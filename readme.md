@@ -7,8 +7,8 @@ The project is implemented in Python.
 ### Forces ###
 The following forces that act on the bodies are,
 
- - [ ] Gravity 
- - [ ] Electric
+ - [x] Gravity 
+ - [x] Electric
  - [ ] Collision
  - [ ] Resistance
 

@@ -55,20 +55,33 @@ while i < N:
     i += 1
 """
 
+rad = 2*constants.scale
+q = 0
+
+# sun
+sun_r = 15*rad
+uni.add_body(zero_vec,zero_vec, m=constants.sun_mass, r=constants.sun_radius*16,
+             q=0, colour=colour.orange, name="Sun")
+
+# moon
+
+X = vector.Vector([constants.au_scale + constants.moon_dist, 0])
+V = vector.Vector([0, constants.moon_speed + constants.earth_speed])
+
+uni.add_body(X,V, m=constants.moon_mass, r=constants.moon_radius*16,
+             q=q, colour=colour.grey, name="Moon")
+
+
 
 # planet
 
-rad = 3*constants.scale
-
 X = vector.Vector([constants.au_scale, 0])
 V = vector.Vector([0, constants.earth_speed])
-q = 0
-    
-uni.add_body(X,V, m=constants.earth_mass, r=rad, q=q, colour=colour.turquoise)
 
+planet_r = 2*rad
+uni.add_body(X,V, m=constants.earth_mass, r=constants.earth_radius*16,
+             q=q, colour=colour.turquoise, name="Earth")
 
-# sun
-uni.add_body(zero_vec,zero_vec, m=constants.sun_mass, r=10*rad, q=0, colour=colour.orange)
 
 
 
@@ -76,7 +89,7 @@ uni.add_body(zero_vec,zero_vec, m=constants.sun_mass, r=10*rad, q=0, colour=colo
 
 # initialise projection screen of universe screen
 uni_screen.update_projection(uni, projection=(0,1))
-
+uni_screen.update_tracking(uni)
 
 
 
@@ -90,9 +103,14 @@ loops = -1
 start_screen = True
 paused = False
 text_size = 100
+label_size = 50
+
+uni_screen.default_message = "Object Size x16"
+
 
 run = True
 while run:
+    #input("Next:")
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -104,23 +122,45 @@ while run:
                 else:
                     paused = not paused
 
+            elif event.key == pygame.K_RIGHT:
+                uni_screen.track_next_object(uni)
+            elif event.key == pygame.K_LEFT:
+                uni_screen.track_prev_object(uni)
 
+            elif event.key == pygame.K_UP:
+                uni_screen.scale = uni_screen.scale / 2
+            elif event.key == pygame.K_DOWN:
+                uni_screen.scale = uni_screen.scale * 2
+
+    ###  draw functions
+
+    uni_screen.update_origin_tracking(uni)
     uni_screen.draw_2dprojection_universe(uni)
+    uni_screen.draw_tracking_label(uni, label_size)
+
+
+    ###  Update functions
 
     if not start_screen and not paused:
+        earth = uni.bodies[1]
+        
         i = 0
         while i < constants.update_num:
             uni.update_all_bodies(time_step / constants.update_num)
+            
+            """
+            pass_start = earth.X.components[1] >= 0 >= earth.X_prev.components[1]\
+                and earth.X.components[0] > 0
+            if pass_start:
+                loops += 1
             i += 1
-
-        earth = uni.bodies[0]
-        pass_start = earth.X.components[1] >= 0 >= earth.X_prev.components[1] and earth.X.components[0] > 0
-        if pass_start:
-            loops += 1
+            """
+        
     elif paused:
-        uni_screen.write_message("Paused", text_size, text_colour=colour.white, background_colour=None)
+        uni_screen.write_message("Paused", text_size, centre=True,
+                                 text_colour=colour.white, background_colour=None)
     else:
-        uni_screen.write_message("Press SPACE to begin", text_size)
+        uni_screen.write_message("Press SPACE to begin", text_size, centre=True)
 
 
     pygame.display.update()
@@ -130,5 +170,5 @@ while run:
 #print("Loops:", loops)
 
 pygame.quit()
-pygame.fonts.quit()
+pygame.font.quit()
 

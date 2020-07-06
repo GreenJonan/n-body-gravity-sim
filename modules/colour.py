@@ -21,6 +21,8 @@ lime = (0,255,127)
 light_blue = (0,161,255)
 
 
+grey = (127,127,127)
+
 
 """
 Look at: https://www.html.am/html-codes/color/color-scheme.cfm?rgbColor=0,255,127 
