@@ -131,6 +131,8 @@ while run:
                 uni_screen.scale = uni_screen.scale / 2
             elif event.key == pygame.K_DOWN:
                 uni_screen.scale = uni_screen.scale * 2
+            elif event.key == pygame.K_RETURN:
+                uni_screen.scale = uni_screen.default_scale
 
     ###  draw functions
 
@@ -153,8 +155,9 @@ while run:
                 and earth.X.components[0] > 0
             if pass_start:
                 loops += 1
-            i += 1
             """
+            i += 1
+
         
     elif paused:
         uni_screen.write_message("Paused", text_size, centre=True,
