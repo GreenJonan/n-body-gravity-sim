@@ -25,18 +25,50 @@ The force an object experiences, depends on the sum of all the forces felt betwe
 This may also be expressed in terms of the idea of fields, in that  the sum of forces an object experiences is found by computing the interaction between the field and the object. The field is constructed indepently of the object, say object 1, and in general is given by F/b1.
 
 
-The motion of the objects is calculated via Euler ~~Runge-Kutte~~ Method, and the metric r is the Euler Distance metric.
+The motion of the objects is calculated via ~~Euler~~ Runge-Kutte-4 Method, and the metric r is the Euclidean distance metric.
+
+Please refer to [OrbitRungeKutta4.pdf](./OrbitRungeKutta4.pdf) for more information.
 
 F(x,v) = F_G + F_E
 
 
+All objects are updated one by one. That is update a body, then the next body is updated using the new information of the body previously updated, not it's origin position.
+
+
+
+## Graphics ##
+
 The visualisation of the objects motion is implemented via the [Pygame](https://www.pygame.org/wiki/about) module. The motion of objects will be in two-dimensions.
 
+Each body can move in an arbitrary number of dimensions, however, each position vector is projected onto a two-dimensional plane. These planes currently can only be the co-ordinate axes.
+Each body is assumed to be a 'sphere', and as such is drawn as a coloured circle.
+
+The projection of the bodies has a particular 'focus', this is the point in space which is the centre of the screen. By default it is the co-ordinate origin. The second option is the centre of mass of the system. The final options are each body in order of body_id / order added to 'Universe'.
 
 
-## Things to implement ##
- - Multi-dimensional motion (objects moves in more than two-dimensions)
+Currently, all objects/shapes are passed to pygame to draw, whether or not they are visible on the screen.
 
+
+
+
+## Controls ##
+ - Press the Space Bar to pause/resume the simulation.
+ - Left arrow key - cycle between object in focus.
+ - Right arrow key - same as left arrow key but in reverse.
+ - Up arrow key - Zoom into the screen (x2).
+ - Down arrow key - Zoom out of the screen (x2).
+ - Enter - Return to default zoom settings.
+
+
+
+## Future Ideas ##
+ - Select arbitrary plane to project object motion onto.
+ - Ability to change time step intervals.
+ - Arbitrarily change zoom levels.
+ - Add elastic & not elastic collision between bodies. Each body has an elastic co-efficient, amount of energy conserved between collisions is (b1.e * b2.e ) * (b1.E0 + b2.E0).
+ - Apply conservation of momentum.
+ - Ability to load arbitrary mass/charge systems  ==>  need to implement a parser.
+ - Trails - lifetime trails & previous N steps.
 
 
 
