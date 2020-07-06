@@ -1,0 +1,74 @@
+FILE.sys is a file containing information about a system with the following format:
+
+TO-DOs are indicated by #
+
+
+OBJECT {
+	Properties of object
+}
+
+
+The following objects are:
+
+#constants {
+	G:value
+	E:value
+
+	distanceError:value
+
+	timeDelay:value
+	updateNumber:value
+	timeStep:value
+}
+
+
+
+#universe {
+	centre:vector
+	resistance:bool
+	conserveEnergy:bool
+
+	body {
+		X:vector
+		V:vector
+
+		mass:value
+		charge:value
+		radius:value
+
+		colour:colour
+		name:string
+	}
+	body {
+	
+	}
+}
+
+
+#screen {
+	width:value
+	height:value
+	scale:value
+
+	background:colour
+}
+
+
+
+
+Note that, the order in which the names are specified is not important, nor is any extra white space (more than one space).
+
+
+It is also possible to compute basic numeric operations:
+
+ #Addition:       +
+ #Subtraction:    -
+ #Multiplication: *
+ #Division:       /
+ #Exponentiation: ^
+ #Modulus:        %
+
+
+The following units are supported:
+
+ #au (Astronomical Unit)
