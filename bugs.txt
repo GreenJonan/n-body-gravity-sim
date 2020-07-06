@@ -1,0 +1,8 @@
+
+Graphical Issues:
+
+1).
+
+Zoom into moon, when the sun approaches certain points in it’s orbit, it appears to collide with earth/moon system. However, this is just a graphical issue. 
+Zoom ~ 2^9, or ~2^10
+Also, the angle between the earth and sun is about 30 & 45 (not 60!) degrees from each horizontal/vertical axis.

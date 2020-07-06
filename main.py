@@ -105,7 +105,7 @@ paused = False
 text_size = 100
 label_size = 50
 
-uni_screen.default_message = "Object Size x16"
+uni_screen.default_message = "Default: Object Radius x16"
 
 
 run = True
@@ -116,23 +116,24 @@ while run:
             run = False
         
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                if start_screen:
+            if start_screen:
+                if event.key == pygame.K_SPACE:
                     start_screen = False
-                else:
+            else:
+                if event.key == pygame.K_SPACE:
                     paused = not paused
 
-            elif event.key == pygame.K_RIGHT:
-                uni_screen.track_next_object(uni)
-            elif event.key == pygame.K_LEFT:
-                uni_screen.track_prev_object(uni)
+                elif event.key == pygame.K_RIGHT:
+                    uni_screen.track_next_object(uni)
+                elif event.key == pygame.K_LEFT:
+                    uni_screen.track_prev_object(uni)
 
-            elif event.key == pygame.K_UP:
-                uni_screen.scale = uni_screen.scale / 2
-            elif event.key == pygame.K_DOWN:
-                uni_screen.scale = uni_screen.scale * 2
-            elif event.key == pygame.K_RETURN:
-                uni_screen.scale = uni_screen.default_scale
+                elif event.key == pygame.K_UP:
+                    uni_screen.scale = uni_screen.scale / 2
+                elif event.key == pygame.K_DOWN:
+                    uni_screen.scale = uni_screen.scale * 2
+                elif event.key == pygame.K_RETURN:
+                    uni_screen.scale = uni_screen.default_scale
 
     ###  draw functions
 
