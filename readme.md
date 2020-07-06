@@ -27,7 +27,7 @@ This may also be expressed in terms of the idea of fields, in that  the sum of f
 
 The motion of the objects is calculated via ~~Euler~~ Runge-Kutte-4 Method, and the metric r is the Euclidean distance metric.
 
-Please refer to [OrbitRungeKutta4.pdf](./OrbitRungeKutta4.pdf) for more information.
+Please refer to [OrbitRungeKutta4.pdf](./modules/OrbitRungeKutta4.pdf) for more information.
 
 F(x,v) = F_G + F_E
 
