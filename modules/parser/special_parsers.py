@@ -101,12 +101,101 @@ def parse_key_values(string:str):
 ####
 
 
+"""
+Mathematical Operations:
+ 
+  +  addition
+  -  subtraction
+  *  multiplication
+  /  division
+  ^  power
+"""
+
+
+
+class MathTree:
+    def __init__(self, val):
+        self.value = None
+        self.left_child = None
+        self.right_child = None
+        self.function = None
+
+    """
+    def add(self):
+        return self.left_child.value + self.right_child.value  # x + y
+
+    def sub(self):
+        return self.left_child.value - self.right_child.value  # x - y
+
+    def mult(self):
+        return self.left_child.value * self.right_child.value  # x * y
+
+    def div(self):
+        return self.left_child.value / self.right_child.value  # x / y
+
+    def pow(self):
+        return self.left_child.value ** self.right_child.value # x ** y
+    """
+    
+    @staticmethod
+    def add(x,y):
+        return x+y
+    @staticmethod
+    def sub(x,y):
+        return x-y
+    @staticmethod
+    def mult(x,y):
+        return x*y
+    @staticmethod
+    def div(x,y):
+        return x/y
+    @staticmethod
+    def pow(x,y):
+        return x**y
+
+    def identity(self):
+        return self.value
+
+
+    def get_tree_value(self):
+        left_none = self.left_child == None
+        right_none = self.right_child == None
+        is_leaf = is_leaf and right_none
+        if is_leaf:
+            return self.identity()
+        elif left_none or right_none:
+            raise ValueError("MathTree Parser incorrectly constructed,\
+                             comparing None type with non-None type.")
+        
+        else:
+            x = self.left_child.get_tree_value()
+            y = self.right_child.get_tree_value()
+        
+            return self.function(x,y)
+
+
+
+    def construct_tree(string:str, parent_name:str):
+        n = len(string)
+
+        i = 0
+        while i < n:
+
+            i += 1
+
+
+
+
 def float_maths_parse(string:str, parent_name:str):
+    subvalues = []
+    
+    # first re-format string to
     val = 0.0
     try:
         val = float(string)
     except ValueError:
-        raise ValueError("\nFile Trace: {0}\nCannot connvert non-numeric string '{1}' into float expression.".format(parent_name, string))
+        raise ValueError("\nFile Trace: {0}\nCannot connvert non-numeric string '{1}' into float expression."\
+                         .format(parent_name, string))
     return val
 
 
