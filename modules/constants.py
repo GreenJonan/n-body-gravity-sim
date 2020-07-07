@@ -5,7 +5,7 @@ import math
 
 pi = math.pi
 au_scale = 1.496e8*1000 #metres
-scale = au_scale/300  # metres = 1pixel
+scale = au_scale/400  # metres = 1pixel
 
 G_const = 6.67430e-11 # Gravity constant
 
@@ -41,3 +41,19 @@ update_num = 4 # how many updates to compute before screen refresh
 year = 60*60*24*365  #ideally 365, however accounting for lag
 time_step = (year/60)*((time_delay)/1000)*((9*60+17)/(60*6*2) )  #*((9*60+15)/(60*6))
 # expected to take two minutes to complete an orbit
+
+
+
+class Constants:
+    def __init__(self, g=G_const, e=E_const, r=R_const, d_err=dist_error,
+                 delay=time_delay, upd_num=update_num, t_step=time_step):
+
+        self.G = g
+        self.E = e
+        self.R = r
+
+        self.distance_error = d_err
+        
+        self.time_delay = delay
+        self.update_number = upd_num
+        self.time_step = t_step
