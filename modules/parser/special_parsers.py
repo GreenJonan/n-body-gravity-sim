@@ -4,8 +4,8 @@ Made is such that when the input file is parsed, ALL NEW LINE ('\n') characters 
 with line break characters.
 """
 
-line_break = ";" # other option is '\n', but then need to change all of parse_file_section function.
-
+line_break = ';' # other option is '\n', but then need to change all of parse_file_section function.
+exponent = 'e'
 
 
 
@@ -179,6 +179,7 @@ class MathList:
         """
         parse = MathList()
         param_word = True
+        prev_char = ''
         
         n = len(string)
         #print(string)
@@ -226,7 +227,9 @@ class MathList:
                     word_start = i+1
                 
                 else:
-                    if param_word:
+                    if prev_char == exponent and (c =='+' or c == '-'):
+                        pass
+                    elif param_word:
                         new_str = string[word_start:i]
                         parse.add_elem(new_str)
                         
@@ -242,6 +245,7 @@ class MathList:
                     word_start = i
 
             i += 1
+            prev_char = c
     
         if word_start != n:
             new_str = string[word_start:i]
@@ -320,8 +324,13 @@ class MathList:
             output[1] = func_p.value
 
             return output
-
-        return construct_tree_subset(self.head, None, parent_name)
+    
+        output = construct_tree_subset(self.head, None, parent_name)
+        if isinstance(output, list):
+            pass # in desired output
+        else:
+            output = [output]
+        return output
 
 
 
@@ -603,13 +612,21 @@ class MathTree:
 
 
 
-def float_maths_parse(string:str, parent_name:str):
+def parse_maths_string(string:str, parent_name:str):
+    """
+    If a string is written with numbers and numeric operations, get the computed float value.
+    :input: maths string
+    :return: float
+    """
     maths_tree = MathTree.construct_tree(string, parent_name)
     
     #print(maths_tree)
     val = maths_tree.get_tree_value(parent_name)
-    #print(string, val)
+    #print()
+    #print(string)
+    #print(val)
     #input()
+    
     return val
 
 
