@@ -1,3 +1,6 @@
+import sys
+int_max = 2147483647
+
 import pygame
 import modules.body as b, modules.universe as u, modules.vector as v,\
     modules.constants as c, modules.colour as col
@@ -248,15 +251,30 @@ class UniverseScreen:
         
         X = body.X
         x,y=0,0
+        width,height = self.dims
 
         x = self.get_pixel(X.components[self.proj[0]] - self.centre[0])
         y = self.get_pixel(X.components[self.proj[1]] - self.centre[1])
         r = math.ceil(body.radius / self.scale)
 
-        pix_centre = (x + self.screen_centre[0], -y + self.screen_centre[1])
+        x_px,y_px = (x + self.screen_centre[0], -y + self.screen_centre[1])
 
-        #print("Here:",body.colour, pix_centre, r)
-        pygame.draw.circle(self.screen, body.colour, pix_centre, r)
+        # now compute bounding box:
+        R = r-1
+        if R < 0:
+            R = 0
+        
+        x_min = x_px - R; x_max = x_px + R
+        y_min = y_px - R; y_max = y_px + R
+        
+        y_in_range = 0 <= y_px < height or 0 <= y_min < height or 0 <= y_max < height
+        x_in_range = 0 <= x_px < width or 0 <= x_min < width or 0 <= x_max < width
+
+        if x_in_range and y_in_range:
+            if r > int_max:
+                r = 0
+                # pygame throws an int overflow error when this is the case
+            pygame.draw.circle(self.screen, body.colour, (x_px,y_px), r)
 
 
 
