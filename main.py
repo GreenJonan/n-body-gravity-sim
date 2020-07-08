@@ -17,8 +17,25 @@ def copy_system_to_file(consts, uni, uniscreen, f_name):
 
 
 
-file_name = "earth_moon_sun.sys"
-f = open(parser.directory + file_name, "r")
+def read_file():
+    file_name = ""
+    while file_name == "":
+        file_name = input("Enter a filename: ")
+    if file_name == "quit" or file_name == "--q":
+        return None
+    f = None
+    try:
+        f = open(parser.directory + file_name, "r")
+    except FileNotFoundError:
+        print("File: '{0}' does not exist.".format(file_name))
+        f, file_name = read_file()
+    return f, file_name
+
+
+f, file_name = read_file()
+if f == None:
+    sys.exit(0)
+
 #file_name = "new_file.txt"
 #f = open(file_name, "r")
 parse_tree = parser.parse_file(f, file_name)
@@ -200,7 +217,7 @@ while run:
     ###  Update functions
 
     if not start_screen and not paused:
-        earth = universe.bodies[2]
+        #earth = universe.bodies[2]
         
         i = 0
         while i < constants.update_number:

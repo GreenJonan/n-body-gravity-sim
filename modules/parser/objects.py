@@ -85,9 +85,13 @@ def parse_vector(string:str, parent_name:str):
         sub_str = string_ls[i]
         
         if n == 1 and sub_str == '':
-            raise ValueError("\nFile Trace:: {0}\n Cannot Make vector of zero length.".format(parent_name))
+            raise ValueError("\nStack Trace: {0}\nCannot Make vector of zero length.".format(parent_name))
         else:
-            vec[i] = parse.parse_maths_string(sub_str, parent_name)
+            tmp = parse.parse_maths_string(sub_str, parent_name)
+            if tmp == None:
+                raise ValueError("\nStack Trace: {0}\nMissing vector component.\n '{1}'".format(string))
+            else:
+                vec[i] = tmp
         
         i += 1
     
@@ -118,7 +122,11 @@ def parse_colour(string:str, parent_name:str):
         vec = [0]*len(cols)
         i = 0
         while i < len(cols):
-            vec[i] = parse.parse_maths_string(cols[i], parent_name)
+            tmp = parse.parse_maths_string(cols[i], parent_name)
+            if tmp == None:
+                raise ValueError("\nStack Trace: {0}\nMissing colour component.\n '{1}'".format(string))
+            else:
+                vec[i] = tmp
             i += 1
 
         if name == "" or name == rgb_str:
@@ -145,24 +153,40 @@ def parse_constants(string:str, parent_name:str):
         my_name = parent_name + ">" + name
 
         if name == g_str:
-            consts.G = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name)
+            if tmp != None:
+                consts.G = tmp
         elif name == e_str:
-            consts.E = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name)
+            if tmp != None:
+                consts.E = tmp
         elif name == R_str:
-            consts.R = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name)
+            if tmp != None:
+                consts.R = tmp
         
         elif name == dist_err_str:
-            consts.distance_error = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name)
+            if tmp != None:
+                consts.distance_error = tmp
         
         elif name == t_del_str:
-            consts.time_delay = int(parse.parse_maths_string(value, my_name))
+            tmp = parse.parse_maths_string(value, my_name)
+            if tmp != None:
+                consts.time_delay = int(tmp)
         elif name == update_num_str:
-            consts.update_number = int(parse.parse_maths_string(value, my_name))
+            tmp = parse.parse_maths_string(value, my_name)
+            if tmp != None:
+                consts.update_number = int(tmp)
         elif name == time_step_str:
-            consts.time_step = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name)
+            if tmp != None:
+                consts.time_step = tmp
 
         elif name == max_dist_str:
-            consts.max_dist = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name)
+            if tmp != None:
+                consts.max_dist = tmp
 
         else:
             raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'"\
@@ -276,13 +300,19 @@ def parse_body(string:str, child_obj:list, parent_name:str):
             V = get_vector_key_value(value, child_obj, key_name)
         
         elif keyword == m_str:
-            mass = parse.parse_maths_string(value, key_name)
+            tmp = parse.parse_maths_string(value, key_name)
+            if tmp != None:
+                mass = tmp
 
         elif keyword == q_str:
-            charge = parse.parse_maths_string(value, key_name)
+            tmp = parse.parse_maths_string(value, key_name)
+            if tmp != None:
+                charge = tmp
 
         elif keyword == r_str:
-            radius = parse.parse_maths_string(value, key_name)
+            tmp = parse.parse_maths_string(value, key_name)
+            if tmp != None:
+                radius = tmp
 
         elif keyword == name_str:
             name = value
@@ -335,12 +365,19 @@ def parse_screen(string:str, child_obj:list, parent_name):
         my_name = parent_name + ">" + name
 
         if name == w_str:
-            width = int( parse.parse_maths_string(value, my_name))
+            tmp = parse.parse_maths_string(value, my_name)
+            if tmp != None:
+                width = int( tmp )
+        
         elif name == h_str:
-            height = int( parse.parse_maths_string(value, my_name))
+            tmp = parse.parse_maths_string(value, my_name)
+            if tmp != None:
+                height = int( tmp )
 
         elif name == scl_str:
-            scale = parse.parse_maths_string(value,my_name)
+            tmp = parse.parse_maths_string(value,my_name)
+            if tmp != None:
+                scale = tmp
 
         elif name == back_str:
             screen_col = get_colour_key_value(value, child_obj, my_name)
@@ -351,9 +388,13 @@ def parse_screen(string:str, child_obj:list, parent_name):
             msg = value
 
         elif name == title_size_str:
-            title_size = int(parse.parse_maths_string(value, my_name))
+            tmp = parse.parse_maths_string(value, my_name)
+            if tmp != None:
+                title_size = int( tmp )
         elif name == label_size_str:
-            label_size = int(parse.parse_maths_string(value, my_name))
+            tmp = parse.parse_maths_string(value, my_name)
+            if tmp != None:
+                label_size = int( tmp )
 
         else:
             raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'"\

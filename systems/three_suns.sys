@@ -1,0 +1,75 @@
+Sun,Sun,Sun System
+The sun is placed at the centre of the system, and at the position of the earth, another sun is placed.
+Directly opposite it in its orbit, same distance from origin, is another Sun.
+
+Theoretically, the forces on the suns should cancel out, and the system should remain locked.
+However, due to computational errors and that the system update one body at a time, the forces become
+unbalanced over time. This is not necessarily a computational error, but an algorithmic one.
+
+Future Note: Add option to update all objects at once, rather than one by one.
+
+
+root {
+
+constants {
+    G: ( (6.67430e-11 ) )
+    E: (1/(4*3.14159265* 8.8541878128))*(10^12)
+    R: 1
+
+    distanceError: 1
+
+    timeDelay : 1000/(60)
+    updateNumber :12
+    timeStep: (365*60*24)*((1000/(40))/1000)*((9*60+17)/(60*6*2) )
+
+    maxDistance : 1.496e11*4.5
+}
+
+
+universe {
+    centre: vector {0,0}
+
+    body {
+        name: Main Sun
+        X: vector {0,0}
+        V: vector {0,0}
+        mass: 1.9884e30
+        radius: 696342e3 * 16
+        colour:  colour{name:orange}
+    }
+
+
+    body {
+        name: Sun 2
+        X: vector {1.496e8*1000,0}
+        V: vector {0, 29800}
+        mass: 1.9884e30
+        radius: 696342e3 * 16
+        colour: colour{name:turquoise}
+    }
+
+    body {
+        name: Sun 3
+        X: vector {-1.496e8*1000,0}
+        V: vector {0, -29800}
+        mass: 1.9884e30
+        radius: 696342e3 * 16
+        colour: colour{name:red}
+    }
+}
+
+
+
+screen {
+    width: 1200
+    height: 900
+
+    background: colour {name:black}
+
+    labelSize:50
+    titleSize:100
+    textColour: colour{name:black}
+    defaultMessage: "Default:"
+}
+
+}

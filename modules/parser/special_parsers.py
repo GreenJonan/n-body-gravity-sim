@@ -226,13 +226,26 @@ def maths_2func(c:str):
         return False
 
 
+def maths_1func(c:str):
+    if c == '-':
+        return True
+    if c == '+':
+        return True
+    elif c == '!':
+        return True
+    else:
+        return False
+
+
 def maths_syntax(c:str):
     if c == '(':
         return True
     elif c == ')':
         return True
+    elif maths_2func(c):
+        return True
     else:
-        return maths_2func(c)
+        return maths_1func(c)
 
 
 
@@ -346,8 +359,11 @@ class MathList:
                     if prev_char == exponent and (c =='+' or c == '-'):
                         pass
                     elif param_word:
-                        new_str = string[word_start:i]
-                        parse.add_elem(new_str)
+                        if word_start == i:
+                            pass # don't add empty/non-parameter
+                        else:
+                            new_str = string[word_start:i]
+                            parse.add_elem(new_str)
                         
                         param_word = False
                         word_start = i
@@ -404,12 +420,18 @@ class MathList:
                 else:
                     return pointer.value
 
+            elif pointer.next != None:
+                if pointer.next.next == end_pointer:
+                    #unary operation
+                    return [pointer.value, pointer.next.value]
+
             output = [None]*3
 
             first_pow = None
             first_mult = None
             first_add = None
 
+            left_elem = False
 
             cont = True
             p = pointer
@@ -419,18 +441,24 @@ class MathList:
                 else:
                     value = p.value
                     if value == '^':
+                        left_elem = False
                         if first_pow == None:
                             first_pow = p
 
                     elif value == '*' or value == '/':
+                        left_elem = False
                         if first_mult == None:
                             first_mult = p
 
-                    elif value == '+' or value == '+':
-                        if first_add == None:
+                    elif value == '+' or value == '-':
+                        if first_add == None and left_elem:
                             first_add = p
-
+                        left_elem = False
+                            
+                    else:
+                        left_elem = True
                     p = p.next
+                        
             func_p = None
 
             if first_add != None:
@@ -443,13 +471,20 @@ class MathList:
                 # get string representation of values
                 tmp_p = pointer
                 value_str = "'"+str(tmp_p.value)+"'"
+                sub_str = ""
                 tmp_p = tmp_p.next
-                while tmp_p != None:
-                    value_str += " " + "'" + str(tmp_p.value) + "'"
-                    tmp_p = tmp_p.next
+                cont = True
+                while cont:
+                    if tmp_p == end_pointer:
+                        sub_str = value_str
+                    if tmp_p == None:
+                        cont = False
+                    else:
+                        value_str += " " + "'" + str(tmp_p.value) + "'"
+                        tmp_p = tmp_p.next
                 
-                raise ValueError("\nStack Trace: {0}\nMultiple parameters in parse string, however no valid function. Values: \"{1}\""\
-                                 .format(parent_name, value_str))
+                raise ValueError("\nStack Trace: {0}\nMultiple parameters in parse string, however no valid function.\n Values: \"{1}\"\n Subset: \"{2}\""\
+                                 .format(parent_name, value_str, sub_str))
                 
             #### format tree
 
@@ -482,6 +517,7 @@ class MathTree:
         self.left_child = None
         self.right_child = None
         self.function = None
+        self.params = 0
 
     def __repr__(self):
         string = ""
@@ -519,26 +555,52 @@ class MathTree:
     @staticmethod
     def pow(x,y):
         return x**y
-
-    def identity(self):
-        return self.value
+    @staticmethod
+    def negate(x):
+        return -x
+    @staticmethod
+    def identity(x):
+        return y
+    @staticmethod
+    def factorial(X):
+        x = int(X)
+    
+        result = 1
+        while x > 0:
+            result * x
+            x -= 1
+        return result
 
 
     def get_tree_value(self, parent_name:str):
-        left_none = self.left_child == None
-        right_none = self.right_child == None
-        is_leaf = left_none and right_none
-        if is_leaf:
-            return self.identity()
-        elif left_none or right_none:
-            raise ValueError("Stack Trace: {0}\nMathTree Parser incorrectly constructed,\
-                             comparing None type with non-None type.".format(parent_name))
-        
+        parse_error = False
+        value = 0
+        if self.params == 0:
+            value =  self.value
         else:
-            x = self.left_child.get_tree_value(parent_name)
-            y = self.right_child.get_tree_value(parent_name)
+            left_none = self.left_child  == None
+            if left_none:
+                parse_error = True
+            else:
+                x = self.left_child.get_tree_value(parent_name)
+                if self.params == 1:
+                    value = self.function(x)
+                else:
+                    right_none = self.right_child == None
+                    if right_none:
+                        parse_error = True
+                    else:
+                        y = self.right_child.get_tree_value(parent_name)
+                        value =  self.function(x,y)
         
-            return self.function(x,y)
+        if parse_error:
+            #print(self.params, self.value, self.func)
+            raise ValueError("Stack Trace: {0}\nMathTree result unbound, and MathTree incorrectly constructed.\n Left: {1}\n Right: {2}".format(parent_name, self.left_child, self.right_child))
+        
+        return value
+            
+        
+        
 
     """
     @staticmethod
@@ -602,6 +664,7 @@ class MathTree:
                     right_leaf = MathTree.get_tree_leaf(right, parent_name)
                       
                 operand = MathTree()
+                operand.params = 2
                 c = maths_tree_list[1]
                 if c == '+':
                     operand.function = MathTree.add
@@ -619,6 +682,65 @@ class MathTree:
                 operand.left_child = left_leaf
                 operand.right_child = right_leaf
                 return operand
+            
+            
+            elif n == 2:
+                # unary operation
+                left = maths_tree_list[0]
+                right = maths_tree_list[1]
+            
+                leaf = None
+            
+                left_function = False
+                right_function = False
+                
+                left_param = False
+                right_param = True
+            
+                if isinstance(left, list):
+                    leaf = treeify(left, parent_name)
+                    left_param = True
+                else:
+                    if maths_1func(left):
+                        left_function = True
+                    else:
+                        leaf = MathTree.get_tree_leaf(left, parent_name)
+                        left_param = True
+
+                if isinstance(right, list):
+                    leaf = treeify(right, parent_name)
+                    right_param = True
+                else:
+                    if maths_1func(right):
+                        right_function = True
+                    else:
+                        leaf = MathTree.get_tree_leaf(right, parent_name)
+                        right_param = True
+                
+
+                if (left_param and right_param) or (not left_param and not right_param):
+                    raise ValueError("Stack Trace: {0}\nTree incorrectly parsed, two parameters, no operand:\n '{1}' '{2}'"\
+                                     .format(parent_name, left_param, right_param))
+                else:
+                    operand = MathTree()
+                    operand.params = 1
+                    c = ''
+                    if not left_param:
+                        c = left
+                    elif not right_param:
+                        c = right
+                            
+                    if c == '+':
+                        operand.function = MathTree.identity
+                    elif c == '-':
+                        operand.function = MathTree.negate
+                    elif c == '!':
+                        operand.function = MathTree.factorial
+                            
+                    operand.left_child = leaf
+                    #print("Leaf:",leaf)
+                    return operand
+                    
             
             else:
                 raise ValueError("Stack Trace: {0}\nTree list Invalid length, '{1}'"\
@@ -752,6 +874,8 @@ def parse_maths_string(string:str, parent_name:str):
     :input: maths string
     :return: float
     """
+    if string == "":
+        return None
     maths_tree = MathTree.construct_tree(string, parent_name)
     
     val = maths_tree.get_tree_value(parent_name)

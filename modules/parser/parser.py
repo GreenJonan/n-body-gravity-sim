@@ -200,9 +200,11 @@ def parse_file_section(f, parse_root:ParseTree):
                             .format(parse_root.name))
         else:
             # read file char
+            #print(":", c)
             
             # comment parser
             if c == '[':
+                print("HERERERE")
                 #comment while open > 0, all closed means no longer comment.
                 open_coms = 1
                 
