@@ -8,7 +8,6 @@ pygame.init()
 pygame.font.init()
 
 
-
 def copy_system_to_file(consts, uni, uniscreen, f_name):
     string = "root {{\n\n{0}\n\n{1}\n\n{2}\n}}".format(consts, uni, uniscreen)
     f = open(f_name, "x")
@@ -17,8 +16,7 @@ def copy_system_to_file(consts, uni, uniscreen, f_name):
 
 
 
-def read_file():
-    file_name = ""
+def read_file(file_name=""):
     while file_name == "":
         file_name = input("Enter a filename: ")
     if file_name == "quit" or file_name == "--q":
@@ -32,16 +30,28 @@ def read_file():
     return f, file_name
 
 
-f, file_name = read_file()
+args = sys.argv
+file_name = ""
+f = None
+
+if len(args) > 1:
+    f_name = args[1]
+    try:
+        f = open(file_name, "r")
+    except FileNotFoundError:
+        print("File: '{0}' does not exist.".format(file_name))
+else:
+    f, file_name = read_file()
+
 if f == None:
     sys.exit(0)
+
 
 #file_name = "new_file.txt"
 #f = open(file_name, "r")
 parse_tree = parser.parse_file(f, file_name)
 
 objects = parse_tree.objectify()
-
 
 
 constants = objects[0]
