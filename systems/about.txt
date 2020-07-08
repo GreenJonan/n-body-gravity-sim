@@ -1,6 +1,12 @@
 FILE.sys is a file containing information about a system with the following format:
 
+Comment out information using [comment] syntax.  Multiple comments can be placed inside one another.
+
+General comments can be made outside the FILE{} object syntax.
+
 TO-DOs are indicated by #
+
+Names-Values are read verbatim when “key:val” is used, that is quote notation. The parser interprets this as (‘’,’key:val’), rather than (‘key’, ‘val’) as with key:val.
 
 
 OBJECT {
@@ -10,37 +16,45 @@ OBJECT {
 
 The following objects are:
 
-#constants {
-	G:value
+root {
+
+constants {
+	G:value;
 	E:value
 
 	distanceError:value
 
 	timeDelay:value
 	updateNumber:value
-	timeStep:value
+	timeStep:value;
+	;
+	[obj :vector {1+(1+4)*2*2^(3e-2) }]
 }
 
 
 
-#universe {
-	centre:vector
+universe {
+	dimension:value
+	centre : vector{3e-2}
 	resistance:bool
+	(HI:BYE)
 	conserveEnergy:bool
-
+	
 	body {
-		X:vector
-		V:vector
+		X: vector {0,0,0}
+		V : vector{0,0,0}
 
 		mass:value
 		charge:value
 		radius:value
 
-		colour:colour
+		colour:colour {1,2,3}
 		name:string
+		
+		body { string }
 	}
-	body {
 	
+	body{
 	}
 }
 
@@ -53,6 +67,7 @@ The following objects are:
 	background:colour
 }
 
+}
 
 
 
@@ -61,11 +76,11 @@ Note that, the order in which the names are specified is not important, nor is a
 
 It is also possible to compute basic numeric operations:
 
- #Addition:       +
- #Subtraction:    -
- #Multiplication: *
- #Division:       /
- #Exponentiation: ^
+ Addition:       +
+ Subtraction:    -
+ Multiplication: *
+ Division:       /
+ Exponentiation: ^
  #Modulus:        %
 
 

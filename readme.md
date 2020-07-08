@@ -57,7 +57,7 @@ Currently, all objects/shapes are passed to pygame to draw, whether or not they 
  - Right arrow key - same as left arrow key but in reverse.
  - Up arrow key - Zoom into the screen (x2).
  - Down arrow key - Zoom out of the screen (x2).
- - Enter - Return to default zoom settings.
+ - Return - Return to default zoom settings.
 
 
 

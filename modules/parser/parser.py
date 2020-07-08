@@ -1,5 +1,5 @@
 #import body, colour, constants, draw, universe, vector
-from modules import body, colour, draw, universe, vector
+from modules import body, colour, draw, universe, vector, constants
 from modules.parser import objects, special_parsers as pars
 
 import sys
@@ -26,9 +26,8 @@ const_str = "constants"
 uni_str = "universe"
 body_str = "body"
 vect_str = "vector"
-col_str = "colour"
 screen_str = "screen"
-
+col_str = "colour"
 
 
 
@@ -61,7 +60,7 @@ class ParseTree:
 
     ####
 
-    def get_child_objects(self, parent_name):
+    def get_child_objects(self, parent_name) -> list:
         """
         Suppose self is already parsed. Extract the key data and objects. Return list of objects in self.
         
@@ -72,13 +71,19 @@ class ParseTree:
     
         i = 0
         while i < N:
-            ls[i] = self.children[i].objectify(parent_name)
+            tmp_ls = self.children[i].objectify(parent_name)
+            if len(tmp_ls) > 1:
+                # there is no reason the lists shouldn't be length 1
+                raise ValueError("\nStack Trace: {0}\nIncorrectly objectified child objects. '{1}'"\
+                                 .format(parent_name, tmp_ls))
+            
+            ls[i] = tmp_ls[0]
             i += 1
         return ls
     
     
     
-    def objectify(self, parent_name=">") -> list:
+    def objectify(self, parent_name=">") ->list:
         """
         Turn self into an object.
         """
@@ -107,29 +112,28 @@ class ParseTree:
     
     
         elif self.name == uni_str:
-            return [ objects.parse_universe(self.string, child_objects, parent_name+self.name) ]
+            return [ objects.parse_universe(self.string, child_objects, my_name) ]
                 
         elif self.name == body_str:
-            pass # parse body object
+            return [ objects.parse_body(self.string, child_objects, my_name) ]
 
         elif self.name == const_str:
-            objects.parse_constants(self.string, my_name)
-            pass # parse constants
+            return [objects.parse_constants(self.string, my_name)]
+            # parse constants
 
         elif self.name == vect_str:
             return [ objects.parse_vector(self.string, my_name) ]
 
         elif self.name == screen_str:
-            pass # parse screen object
+            return [ objects.parse_screen(self.string, child_objects, my_name) ]
+            # parse screen object
                 
         elif self.name == col_str:
             return [ objects.parse_colour(self.string, my_name) ]
                 
         else:
-            print("UPDATE ME")
-            sys.exit()
-            raise TypeError("Unknown Object type '{0}' in system file: {1}"\
-                            .format(self.name, self.fileName))
+            raise TypeError("\nStack Trace: {0}\nUnknown Object type '{1}' in system file: {2}"\
+                            .format(parent_name, self.name, self.fileName))
     
 
 
@@ -264,6 +268,7 @@ def parse_file_section(f, parse_root:ParseTree):
         string = add_word(string, prev_word)
 
     parse_root.string = string
+    #print("string:", string)
     return
 
 

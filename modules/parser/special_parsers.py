@@ -6,6 +6,7 @@ with line break characters.
 
 line_break = ';' # other option is '\n', but then need to change all of parse_file_section function.
 exponent = 'e'
+verbatim = '"'
 
 
 
@@ -28,14 +29,17 @@ def is_white_space(c:str):
 #####   Transform keyword, value pairs into tuples.
 
 
-def parse_key_values(string:str):
+def parse_key_values(string:str, parent_name:str):
     """
     Parse a:b into (a,b). Each section
     """
     output = []
-    #print(string)
-    #print("Nothing has caused me to reset the value parameter!")
     # dont worry I fixed it such that new lines ('\n') are replaced with ';'
+    
+    def add_pair(ls, name, val):
+        if len(name) > 0 or len(val) > 0:
+            ls.append((name, val))
+        return "",""
     
     name = ""
     value = ""
@@ -46,10 +50,11 @@ def parse_key_values(string:str):
     has_char = False
     new_word = False
     
+    seen_keyword = False
     
     N = len(string)
     i = 0
-    #print(string, N)
+    
     while i <= N:
         if i == N:
             if c != line_break:
@@ -57,8 +62,105 @@ def parse_key_values(string:str):
             else: break
         else:
             c = string[i]
+        """
+        if c == ')':
+            raise SyntaxError("\nStack Trace: {0}\nNo opening bracket exists, '{1}'"\
+                              .format(parent_name, string))
+        elif c == '(':
+            ######
+            # add phrase verbatim
+            if new_word:
+                new_word = False
+                if has_char:
+                    word += " "
+            open_num = 0 #number of open brackets
+            cont = True
+            j = i
+            while cont:
+                if j == N:
+                    cont = False
+                else:
+                    c = string[j]
+                    if c == ')':
+                        open_num -= 1
+                    elif c == '(':
+                        open_num += 1
+                    else:
+                        word += c
+                
+                    if open_num <= 0:
+                        cont = False
+                    else:
+                        j += 1
+
+            if j == N:
+                raise SyntaxError("\nStack Trace: {0}\nFinal closing bracket does not exist, '{1}'"\
+                                  .format(parent_name, string))
+            else:
+                pass #i -= 1 # compensate for += 1 later
+            
+            if i+1 < j:
+                has_char = True
+            i = j
+            ######
+        """
+        if c == verbatim:
+            # acts as verbatim string
+            
+            # add phrase verbatim
+            if new_word:
+                new_word = False
+                if has_char:
+                    word += " "
+            
+            cont = True
+            j = i+1
+            while cont:
+                if j == N:
+                    cont = False
+                else:
+                    c = string[j]
+                    if c == verbatim:
+                        cont = False
+                    else:
+                        word += c
+                        j += 1
+            
+            if j == N:
+                raise SyntaxError("\nStack Trace: {0}\nClosing quote character does not exist, '{1}'"\
+                                  .format(parent_name, string))
+            else:
+                pass
+                    
+            if i+1 < j:
+                has_char = True
+                i = j
         
-        if c == ":":
+        elif c == ":":
+            if seen_keyword:
+                ######
+                # find beggining and end part of the string
+                j = i
+                d = string[j]
+                while j >= 0 and d != ';':
+                    j -= 1
+                    if j >= 0:
+                        d = string[j]
+                beggining = j + 1
+                
+                j = i
+                e = string[j]
+                while j < N and e != ';':
+                    j += 1
+                    if j < N:
+                        e = string[j]
+                ending = j
+                
+                raise SyntaxError("\nStack Trace: {0}\nInvalid use of keyword value pairs. Cannot place multiple 'keyword:value' instances within one code section.\n'{1}'"\
+                                  .format(parent_name, string[beggining:ending]))
+                ######
+                
+            seen_keyword = True
             name = word
             word = ""
             key = False
@@ -67,13 +169,10 @@ def parse_key_values(string:str):
         
         elif c == line_break:
             value = word
-            if len(name) > 0 or len(value) > 0:
-                output.append((name, value))
-            name = ""
-            value = ""
+            name, value = add_pair(output, name, value)
             word = ""
             has_char = False
-        #new_word = True
+            seen_keyword = False  #reset keyword searching
         
         elif is_white_space(c):
             new_word = True
@@ -90,7 +189,7 @@ def parse_key_values(string:str):
         i += 1
     
     
-    #print(output)
+    #print("output:",output)
     return output
 
 
@@ -170,6 +269,15 @@ class MathList:
 
             string += ")"
         return string
+    
+    
+    def __len__(self):
+        length = 0
+        p = self.head
+        while p != None:
+            length += 1
+            p = p.next
+        return length
 
 
     @staticmethod
@@ -182,7 +290,11 @@ class MathList:
         prev_char = ''
         
         n = len(string)
-        #print(string)
+
+        has_char = False
+        
+        #print()
+        #print("Decompose:", string)
 
         i = 0
         word_start = i
@@ -194,18 +306,19 @@ class MathList:
                     raise SyntaxError("\nStack Trace: {0}\nClose bracket has no opening bracket in '{1}'"\
                                       .format(parent_name, string))
                 elif c == '(':
-                    if param_word:
-                        raise SyntaxError("\nStack Trace: {0}\nUndefined function between two numbers: '{1}'"\
-                                          .format(parent_name, string))
-                    else:
-                        # add function
-                        new_str = string[word_start:i]
-                        parse.add_elem(new_str)
+                    if has_char:
+                        if param_word:
+                            raise SyntaxError("\nStack Trace: {0}\nUndefined function between two numbers: '{1}'"\
+                                              .format(parent_name, string))
+                        else:
+                            # add function
+                            new_str = string[word_start:i]
+                            parse.add_elem(new_str)
                     
                     
                     # Read opening bracket sub-syntax
                     open_brac_num = 1
-                    j = i
+                    j = i+1
                     while open_brac_num > 0 and j < n:
                         c = string[j]
                         if c == ')':
@@ -213,6 +326,7 @@ class MathList:
                         else:
                             if c == '(':
                                 open_brac_num += 1
+                        if open_brac_num != 0:
                             j += 1
         
                     if j == n:
@@ -225,6 +339,8 @@ class MathList:
                         i = j
                     
                     word_start = i+1
+                    has_char = True
+                    param_word = False
                 
                 else:
                     if prev_char == exponent and (c =='+' or c == '-'):
@@ -237,12 +353,19 @@ class MathList:
                         word_start = i
 
             else:
-                if not param_word:
-                    new_str = string[word_start:i]
-                    parse.add_elem(new_str)
+                if is_white_space(c) and word_start == i:
+                    word_start += 1
+                else:
+                    if not param_word:
+                        new_str = string[word_start:i]
+                        parse.add_elem(new_str)
                     
-                    param_word = True
-                    word_start = i
+                        param_word = True
+                        word_start = i
+            
+                    if not is_white_space(c):
+                        has_char = True
+
 
             i += 1
             prev_char = c
@@ -262,7 +385,8 @@ class MathList:
         
         Order of operations, (),^,*,/,+,-
         """
-        #print("Constructing tree1:",self)
+        #print()
+        #print("Constructing tree1:",self, len(self))
 
         # helper function
         def construct_tree_subset(pointer, end_pointer=None, parent_name:str=""):
@@ -316,11 +440,21 @@ class MathList:
             elif first_pow != None:
                 func_p = first_pow
             else:
-                raise ValueError("Stack Trace: {0}\nMultiple parameters in parse string, however no functions."\
-                                 .format(parent_name))
+                # get string representation of values
+                tmp_p = pointer
+                value_str = "'"+str(tmp_p.value)+"'"
+                tmp_p = tmp_p.next
+                while tmp_p != None:
+                    value_str += " " + "'" + str(tmp_p.value) + "'"
+                    tmp_p = tmp_p.next
+                
+                raise ValueError("\nStack Trace: {0}\nMultiple parameters in parse string, however no valid function. Values: \"{1}\""\
+                                 .format(parent_name, value_str))
+                
+            #### format tree
 
-            output[0] = construct_tree_subset(pointer, func_p)
-            output[2] = construct_tree_subset(func_p.next, end_pointer)
+            output[0] = construct_tree_subset(pointer, func_p, parent_name)
+            output[2] = construct_tree_subset(func_p.next, end_pointer, parent_name)
             output[1] = func_p.value
 
             return output
@@ -425,7 +559,7 @@ class MathTree:
             value = float(string)
         except ValueError:
             tmp_str = "Cannot connvert non-numeric string '{1}' into float expression."
-            tmp_str1 = "\nFile Trace: {0}\n" + tmp_str
+            tmp_str1 = "\nStack Trace: {0}\n" + tmp_str
             raise ValueError(tmp_str1.format(parent_name, string))
             
         return MathTree(value)
@@ -620,12 +754,11 @@ def parse_maths_string(string:str, parent_name:str):
     """
     maths_tree = MathTree.construct_tree(string, parent_name)
     
-    #print(maths_tree)
     val = maths_tree.get_tree_value(parent_name)
     #print()
-    #print(string)
-    #print(val)
-    #input()
+    #print("String:",string)
+    #print("Maths Tree:", maths_tree)
+    #print("result:",val)
     
     return val
 
@@ -640,7 +773,7 @@ def get_float_value(word:str, parent_name:str):
         value = float(word)
     except ValueError:
         tmp_str = "Cannot connvert non-numeric string '{1}' into float expression."
-        tmp_str1 = "\nFile Trace: {0}\n" + tmp_str
+        tmp_str1 = "\nStack Trace: {0}\n" + tmp_str
         raise ValueError(tmp_str1.format(parent_name, word))
                                 
     return value

@@ -24,6 +24,9 @@ light_blue = (0,161,255)
 grey = (127,127,127)
 
 
+
+
+
 """
 Look at: https://www.html.am/html-codes/color/color-scheme.cfm?rgbColor=0,255,127 
 for more colours
@@ -71,3 +74,70 @@ def random_rgb():
     hsv = HSVColour()
     hsv.hue = rnd.random()
     return hsv.get_rgb()
+
+
+def rgb_inverse(rgb:tuple) -> tuple:
+    """
+    Given a colour, return it's HSV inverse as an rgb
+    """
+
+    hsv = colorsys.rgb_to_hsv(rgb[0]/255, rgb[1]/255, rgb[2]/255)
+
+    hue = hsv[0] - 0.5
+    if hue < 0:
+        hue = 1 + hue
+    val = 1 - hsv[2]
+
+    tmp_rgb = colorsys.hsv_to_rgb(hue, hsv[1], val)
+    return int(255 * tmp_rgb[0]), int(255 * tmp_rgb[1]), int(255 * tmp_rgb[2])
+
+
+
+def get_colour_name(name:str, stack_pos:str=""):
+    """
+    Get a colour rgb value based on a name value.
+    """
+    
+    if name == "random":
+        return random_rgb()
+    elif name == "white":
+        return white
+    elif name == "black":
+        return black
+    elif name == "grey":
+        return grey
+    elif name == "red":
+        return red
+    elif name == "green":
+        return green
+    elif name == "blue":
+        return blue
+    elif name == "yellow":
+        return yellow
+    elif name == "turquoise":
+        return turquoise
+    elif name == "magenta":
+        return magenta
+    elif name == "purple":
+        return purple
+    elif name == "orange":
+        return orange
+    elif name == "lime":
+        return lime
+    elif name == "light blue":
+        return light_blue
+    else:
+        raise SyntaxError("\nStack Trace: {0}\nUnknown Colour '{1}'".format(stack_pos, name))
+
+
+
+
+def get_rgb_str(col:tuple)->str:
+    if len(col) != 3:
+        raise ValueError("Not valid RGB value:", col)
+
+    else:
+        r = col[0]
+        g = col[1]
+        b = col[2]
+        return "rgb: " + str(r) +"," +str(g) +","+ str(b)

@@ -43,10 +43,13 @@ time_step = (year/60)*((time_delay)/1000)*((9*60+17)/(60*6*2) )  #*((9*60+15)/(6
 # expected to take two minutes to complete an orbit
 
 
+max_dist = 1.5*au_scale
+
+
 
 class Constants:
     def __init__(self, g=G_const, e=E_const, r=R_const, d_err=dist_error,
-                 delay=time_delay, upd_num=update_num, t_step=time_step):
+                 delay=time_delay, upd_num=update_num, t_step=time_step, m_dist=max_dist):
 
         self.G = g
         self.E = e
@@ -57,3 +60,10 @@ class Constants:
         self.time_delay = delay
         self.update_number = upd_num
         self.time_step = t_step
+
+        self.max_dist = m_dist
+
+    def __repr__(self):
+        string = "constants {{\nG: {0}\nE: {1}\nR: {2}\ndistanceError: {3}\ntimeDelay: {4}\nupdateNumber: {5}\ntimeStep: {6}\nmaxDistance: {7}\n}}"\
+                .format(self.G, self.E, self.R, self.distance_error, self.time_delay, self.update_number, self.time_step, self.max_dist)
+        return string

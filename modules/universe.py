@@ -25,6 +25,16 @@ class Universe:
         self.centre = centre
         self.conserve_energy = False
     
+    
+    def __repr__(self):
+        body_str = ""
+        for bod in self.bodies:
+            body_str += str(bod) + "\n"
+        
+        string = "universe {{\ncentre: vector {0}\nresistance: {1}\nconserveEnergy: {2}\n{3}}}"\
+                .format(self.centre, self.resistance, self.conserve_energy, body_str)
+        return string
+    
 
     def add_body(self, X0, V0, m=1, r=1, q=0, colour=colour.black, name=""):
         self.max_id += 1

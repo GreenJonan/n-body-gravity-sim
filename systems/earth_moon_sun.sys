@@ -1,0 +1,67 @@
+Earth, Moon & Sun System
+
+
+root {
+
+constants {
+    G: ( (6.67430e-11 ) )
+    E: (1/(4*3.14159265* 8.8541878128))*(10^12)
+    R: 1
+
+    distanceError: 1
+
+    timeDelay : 1000/(40)
+    updateNumber :4
+    timeStep: (365*60*24)*((1000/(40))/1000)*((9*60+17)/(60*6*2) )
+
+    maxDistance : 1.496e11*4.5
+}
+
+
+universe {
+    centre: vector {0,0}
+
+    body {
+        name: Sun
+        X: vector {0,0}
+        V: vector {0,0}
+        mass: 1.9884e30
+        radius: 696342e3 * 16
+        colour:  colour{name:orange}
+    }
+
+    body {
+        name: Moon
+        X: vector {1.496e8*1000 + 384402e3,0}
+        V: vector {0, 29800 + 1.022e3}
+        mass: 7.342e22
+        radius: 1737.4e3 * 16
+        colour: colour{name:grey}
+    }
+
+
+    body {
+        name: Earth
+        X: vector {1.496e8*1000,0}
+        V: vector {0, 29800}
+        mass: 5.9722e24
+        radius: 6371e3 * 16
+        colour: colour{name:turquoise}
+    }
+}
+
+
+
+screen {
+    width: 1200
+    height: 900
+
+    background: colour {name:black}
+
+    labelSize:50
+    titleSize:100
+    textColour: colour{name:black}
+    defaultMessage: "Default: Object Radius x16"
+}
+
+}

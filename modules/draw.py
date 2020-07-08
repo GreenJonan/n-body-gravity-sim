@@ -17,13 +17,20 @@ track_id refers to the body id that the universe screen will track as the centre
 
 
 class UniverseScreen:
-    def __init__(self, width=800, height=600, scale=1., colour=col.white):
+    def __init__(self, width=800, height=600, scale=1., colour=col.white,
+                 text_colour=col.black, label_size=50, title_size=100, msg=None):
+        
         self.dims = (width,height)
         self.screen = pygame.display.set_mode(self.dims)
         self.colour = colour
         self.default_scale = scale
         self.scale = scale
-        self.default_message = None
+        
+        self.default_message = msg
+        self.text_colour = text_colour
+        self.label_size = label_size
+        self.title_size = title_size
+        
         
         self.screen_centre = (int(width/2), int(height/2))
         self.track_id = -1
@@ -31,12 +38,23 @@ class UniverseScreen:
         self.centre = None
         self.proj = None
     
+        self.show_zoom = False
+    
+    
+    
+    def __repr__(self):
+        string = "screen {{\nwidth: {0}\nheight:{1}\nbackground: colour {{{2}}}\ntextColour: colour {{{3}}}\nlabelSize:{4}\ntitleSize:{5}\ndefaultMessage: \"{6}\"\nscale: {7}\n}}"\
+            .format(self.dims[0], self.dims[1], col.get_rgb_str(self.colour), col.get_rgb_str(self.text_colour), self.label_size, self.title_size, self.default_message, self.scale)
+        return string
+    
+    
     
     def get_pixel(self, x):
         """
         scale is: scale unit = 1 pixel. Hence pixels = vals / scale
         """
-        return  int (x/self.scale)
+        return int (x/self.scale)
+    
     
     
     def update_projection(self, U:u.Universe, projection=(0,1)):
@@ -59,6 +77,7 @@ class UniverseScreen:
 
         self.proj = (proj_x,proj_y)
         return self.proj
+
 
 
     def update_centre(self, centre=(0,0)):
@@ -169,33 +188,45 @@ class UniverseScreen:
 
     ####   DRAW TRACKING:
 
-    def draw_tracking_label(self, U:u.Universe, text_size=20):
+    def draw_tracking_label(self, U:u.Universe):
         """
         Draw a label for what body is currently being tracked.
         If the body has a name, use that instead of the id.
         """
+        
+        msg = ""
+        colour = None
     
         if self.track_id < 0:
             ## dont draw a label
             if self.default_message == None:
                 pass
             else:
-                self.write_message(self.default_message, text_size, centre=False,
-                               text_colour=col.white, background_colour=None)
+                msg = self.default_message
+            colour = col.rgb_inverse(self.colour)
+                
         elif self.track_id == 0:
-            self.write_message("Centre of Mass", text_size, centre=False,
-                               text_colour=col.white, background_colour=None)
+            msg = "Centre of Mass"
+            colour = col.rgb_inverse(self.colour)
         
         else:
             body = U.get_body(self.track_id)
-            string = body.name
+            msg = body.name
             
-            if string == "":
-                string = "Body " + str(self.track_id)
-     
-            self.write_message(string, text_size, centre=False,
-                   text_colour=body.colour, background_colour=None)
-    
+            if msg == "":
+                msg = "Body " + str(self.track_id)
+
+            colour = body.colour
+                
+        if self.show_zoom:
+            zoom = self.default_scale/ self.scale
+            if zoom != 1.0:
+                if len(msg) != 0:
+                    msg += ",   " + "Zoom: x" + str(zoom)
+                else:
+                    msg = "Zoom: x" + str(zoom)
+        
+        self.write_label(msg, colour)
     
 
     #####   DRAW PROJECTIONS
@@ -224,6 +255,7 @@ class UniverseScreen:
 
         pix_centre = (x + self.screen_centre[0], -y + self.screen_centre[1])
 
+        #print("Here:",body.colour, pix_centre, r)
         pygame.draw.circle(self.screen, body.colour, pix_centre, r)
 
 
@@ -264,7 +296,7 @@ class UniverseScreen:
 
 
     def write_message(self, text:str, font_size:int=12, centre=True,
-                      text_colour:tuple=col.black, background_colour=col.white):
+                      text_colour:tuple=col.black, background_colour=None):
         
         text_screen = self.message(text, font_size, text_colour, background_colour)
 
@@ -277,6 +309,27 @@ class UniverseScreen:
             y = int(self.screen_centre[1] - (text_height/2))
         
         self.screen.blit(text_screen, (x,y))
+
+
+
+    def write_label(self, text:str, colour=None, titleSize=False, centre=False):
+        size = self.label_size
+        if titleSize:
+            size = self.title_size
+        
+        if colour == None:
+            colour = self.text_colour
+        self.write_message(text, size, centre=centre, text_colour=colour,
+                           background_colour=self.colour)
+
+
+    def write_title_message(self, text:str, background=True):
+        back_colour = None
+        if background:
+            back_colour = col.rgb_inverse(self.text_colour)
+
+        self.write_message(text, font_size=self.title_size, centre=True, text_colour=self.text_colour,
+                           background_colour=back_colour)
 
 
 

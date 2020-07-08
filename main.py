@@ -1,16 +1,66 @@
-from modules import body
-from modules import constants
-from modules import draw
-from modules import universe
-from modules import vector
+from modules.parser import parser
 from modules import colour
 
+import sys
 import random as rnd
 import pygame
 pygame.init()
 pygame.font.init()
 
 
+
+def copy_system_to_file(consts, uni, uniscreen, f_name):
+    string = "root {{\n\n{0}\n\n{1}\n\n{2}\n}}".format(consts, uni, uniscreen)
+    f = open(f_name, "x")
+    f.write(string)
+    f.close()
+
+
+
+file_name = "earth_moon_sun.sys"
+f = open(parser.directory + file_name, "r")
+#file_name = "new_file.txt"
+#f = open(file_name, "r")
+parse_tree = parser.parse_file(f, file_name)
+
+objects = parse_tree.objectify()
+
+
+
+constants = objects[0]
+universe = objects[1]
+screen = objects[2]
+
+
+
+
+if screen.scale < 0:
+    # update scale based on max distance in constants object
+    max_dist = constants.max_dist
+
+    h,w = screen.dims
+    length = h
+    if w < length:
+        length = w
+
+    screen.scale = max_dist / (length * 2)
+    screen.default_scale = screen.scale
+
+
+
+#copy_name = "new_file2.txt"
+#copy_system_to_file(constants, universe, screen, copy_name)
+
+"""
+au_scale = 1.496e8*1000 #metres
+scale = au_scale/400  # metres = 1pixel
+print("SCALE:",scale, screen.scale, scale/screen.scale)
+
+sys.exit()
+"""
+
+
+"""
 
 dim = 2
 max_radius = 800
@@ -41,7 +91,7 @@ time_step = constants.time_step
 ### Set up bodies
 # let position be random, but inital velocity be zero
 
-"""
+#####
 N = 10
 i = 0
 while i < N:
@@ -53,7 +103,7 @@ while i < N:
     uni.add_body(X,zero_vec, m=m, r=r, q=q, colour=colour.random_rgb())
 
     i += 1
-"""
+####
 
 rad = 2*constants.scale
 q = 0
@@ -82,35 +132,36 @@ planet_r = 2*rad
 uni.add_body(X,V, m=constants.earth_mass, r=constants.earth_radius*16,
              q=q, colour=colour.turquoise, name="Earth")
 
-
+"""
 
 
 
 
 # initialise projection screen of universe screen
-uni_screen.update_projection(uni, projection=(0,1))
-uni_screen.update_tracking(uni)
+screen.update_projection(universe, projection=(0,1))
+screen.update_tracking(universe)
 
 
 
 #####
 #####   Main run loop
 #####
+"""
+print()
+for body in universe.bodies:
+    print(body.name, body.X)
+"""
+
 
 
 loops = -1
 
 start_screen = True
 paused = False
-text_size = 100
-label_size = 50
-
-uni_screen.default_message = "Default: Object Radius x16"
 
 
 run = True
 while run:
-    #input("Next:")
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -124,32 +175,36 @@ while run:
                     paused = not paused
 
                 elif event.key == pygame.K_RIGHT:
-                    uni_screen.track_next_object(uni)
+                    screen.track_next_object(universe)
                 elif event.key == pygame.K_LEFT:
-                    uni_screen.track_prev_object(uni)
+                    screen.track_prev_object(universe)
 
                 elif event.key == pygame.K_UP:
-                    uni_screen.scale = uni_screen.scale / 2
+                    screen.scale = screen.scale / 2
                 elif event.key == pygame.K_DOWN:
-                    uni_screen.scale = uni_screen.scale * 2
+                    screen.scale = screen.scale * 2
                 elif event.key == pygame.K_RETURN:
-                    uni_screen.scale = uni_screen.default_scale
+                    screen.scale = screen.default_scale
+
+                elif event.key == pygame.K_z:
+                    
+                    screen.show_zoom = not screen.show_zoom
 
     ###  draw functions
 
-    uni_screen.update_origin_tracking(uni)
-    uni_screen.draw_2dprojection_universe(uni)
-    uni_screen.draw_tracking_label(uni, label_size)
+    screen.update_origin_tracking(universe)
+    screen.draw_2dprojection_universe(universe)
+    screen.draw_tracking_label(universe)
 
 
     ###  Update functions
 
     if not start_screen and not paused:
-        earth = uni.bodies[1]
+        earth = universe.bodies[2]
         
         i = 0
-        while i < constants.update_num:
-            uni.update_all_bodies(time_step / constants.update_num)
+        while i < constants.update_number:
+            universe.update_all_bodies(constants.time_step / constants.update_number)
             
             """
             pass_start = earth.X.components[1] >= 0 >= earth.X_prev.components[1]\
@@ -157,14 +212,22 @@ while run:
             if pass_start:
                 loops += 1
             """
+            """
+            print()
+            for body in universe.bodies:
+                print(body.name, body.X)
+            """
             i += 1
 
         
     elif paused:
-        uni_screen.write_message("Paused", text_size, centre=True,
-                                 text_colour=colour.white, background_colour=None)
+        #uni_screen.write_message("Paused", text_size, centre=True,
+        #                         text_colour=colour.white, background_colour=None)
+
+        screen.write_label("Paused", colour.rgb_inverse(screen.colour), True, True)
     else:
-        uni_screen.write_message("Press SPACE to begin", text_size, centre=True)
+        screen.write_title_message("Press SPACE to begin")
+        #uni_screen.write_message("Press SPACE to begin", text_size, centre=True)
 
 
     pygame.display.update()

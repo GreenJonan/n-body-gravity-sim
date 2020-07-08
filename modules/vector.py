@@ -107,8 +107,12 @@ class Vector:
 
 
     def __eq__(self, other):
+        if isinstance(other, type(None)):
+            return False
+        
         if not isinstance(other, Vector):
-            raise ValueError("Error: Equality not defined between {0} type and {1} type.".format(type(self), type(other)))
+            raise ValueError("Equality not defined between {0} type and {1} type."\
+                             .format(type(self), type(other)))
         elif Vector.vector_len_error(self, other):
             pass
         else:
@@ -123,7 +127,10 @@ class Vector:
 
 
     def __repr__(self):
-        return str(self.components)
+        tmp_str = str(self.components)
+        tmp_str= tmp_str.lstrip('(').rstrip(')')
+        return '{' + tmp_str + '}'
+    
 
 
 
