@@ -15,6 +15,8 @@ from modules import vector
 from modules import constants
 from modules import colour
 
+import math
+
 
 
 class Universe:
@@ -24,6 +26,10 @@ class Universe:
         self.max_id = len(bodies)
         self.centre = centre
         self.conserve_energy = False
+    
+        # not implemented
+        self.max_speed = -1
+        self.relativistic = False
     
     
     def __repr__(self):
@@ -187,6 +193,20 @@ class Universe:
 
 
 
+    def net_acceleration(self, obj:body.Body, X:vector.Vector, V:vector.Vector):
+        if obj.mass == 0:
+            return vector.Vector.zero_vector(len(self.centre))
+        else:
+            F = self.net_force(obj.id, X, V)
+
+            if self.relativistic and self.max_speed > 0:
+                mass = self.lorentz_factor(V) * obj.mass)
+                force = F - vector.Vector.inner_product(V,F)*V / self.max_speed^2
+                return force/mass
+            else:
+                return F * ( 1 / obj.mass)
+
+
 
     def runge_kutta_method(self, obj:body.Body, t:float):
         """
@@ -211,19 +231,19 @@ class Universe:
         :input:  Body object, and t - time step (h in above equations)
         :return: None, update body direction only
         """
-        force = self.net_force(obj.id, obj.X, obj.V)
+        #force = self.net_force(obj.id, obj.X, obj.V)
         #print("Inital Force:",force, obj.name)
 
-        kv1 = force *( 1 / obj.mass)
+        kv1 = self.net_acceleration(obj, obj.X, obj.V)
         kx1 = obj.V
 
-        kv2 = self.net_force(obj.id, obj.X + kx1*(t/2), obj.V + kv1*(t/2)) *( 1 / obj.mass)
+        kv2 = self.net_acceleration(obj, obj.X + kx1*(t/2), obj.V + kv1*(t/2))
         kx2 = obj.V + (t/2) * kv1
 
-        kv3 = self.net_force(obj.id, obj.X + kx2*(t/2), obj.V + kv2*(t/2)) *( 1 / obj.mass)
+        kv3 = self.net_acceleration(obj, obj.X + kx2*(t/2), obj.V + kv2*(t/2))
         kx3 = obj.V + (t/2) * kv2
 
-        kv4 = self.net_force(obj.id, obj.X + kx3*t, obj.V + kv3*t) *( 1 / obj.mass)
+        kv4 = self.net_acceleration(obj, obj.X + kx3*t, obj.V + kv3*t)
         kx4 = obj.V + kv3*t
 
         #new_v = obj.V + (t/6) * (kv1 + 2*kv2 + 2*kv3 + kv4)
@@ -278,6 +298,30 @@ class Universe:
 
 
 
+    def lorentz_factor(self, v:vector.Vector) -> float:
+        """
+        Find the lorentz factor for a particular speed.
+        y = 1/ sqrt{1-v^2/c^2}
+        """
+        if self.max_speed < 0:
+            return 1  # symbolises infinite max speed.
+        elif self.max_speed == 0:
+            raise ValueError("\nCannot find lorentz factor for universe with Speed Limit of 0.")
+        else:
+            v_sqr = vector.Vector.inner_product(v,v)
+            c_sqr = self.max_speed^2
+            if v_sqr > c_sqr:
+                raise ValueError("\nVelocity faster than the Universal Speed limit.\n  Vector: {0}\n  Max Speed: {1}"\
+                                 .format(v,self.max_speed))
+            return 1 / math.sqrt(1 - v_sqr/c_sqr)
+
+
+
+
+"""
+See here for more information about relativistic forces: 
+https://en.wikipedia.org/wiki/Relativistic_mechanics#Force
+"""
 
 
 
