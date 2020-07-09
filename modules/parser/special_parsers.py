@@ -227,11 +227,23 @@ def maths_2func(c:str):
 
 
 def maths_1func(c:str):
+    if maths_1left_func(c):
+        return True
+    else:
+        return maths_1right_func(c)
+
+
+def maths_1left_func(c:str):
     if c == '-':
         return True
-    if c == '+':
+    elif c == '+':
         return True
-    elif c == '!':
+    else:
+        return False
+
+
+def maths_1right_func(c:str):
+    if c == '!':
         return True
     else:
         return False
@@ -356,6 +368,7 @@ class MathList:
                     param_word = False
                 
                 else:
+                    has_char = True # allows for -() syntax
                     if prev_char == exponent and (c =='+' or c == '-'):
                         pass
                     else:
@@ -428,7 +441,30 @@ class MathList:
             elif pointer.next != None:
                 if pointer.next.next == end_pointer:
                     #unary operation
-                    return [pointer.value, pointer.next.value]
+                    left = None
+                    right = None
+                    
+                    if isinstance(pointer.value, str):
+                        left = pointer.value
+                    else:
+                        left = construct_tree_subset(pointer, pointer.next, parent_name)
+                    if isinstance(pointer.next.value, str):
+                        right = pointer.next.value
+                    else:
+                        right = construct_tree_subset(pointer.next, end_pointer, parent_name)
+                    
+                    return [left, right]
+                    
+
+            # see if the first pointer is a lefthand function.
+            if isinstance(pointer.value, str):
+                if maths_1left_func(pointer.value):
+                    right = construct_tree_subset(pointer.next, end_pointer, parent_name)
+                    #print("here", pointer.value, right)
+                    return [pointer.value, right]
+            
+            
+            # otherwise triple or more,
 
             output = [None]*3
 
@@ -440,6 +476,7 @@ class MathList:
 
             cont = True
             p = pointer
+            last_p = p
             while cont:
                 if p == end_pointer:
                     cont = False
@@ -462,9 +499,11 @@ class MathList:
                             
                     else:
                         left_elem = True
+                    last_p = p
                     p = p.next
                         
             func_p = None
+            double_params = True
 
             if first_add != None:
                 func_p = first_add
@@ -542,7 +581,13 @@ class MathTree:
                 string = "(" + left + " / " + right + ")"
             elif self.function == MathTree.pow:
                 string = "(" + left + " ^ " + right + ")"
-                                    
+            elif self.function == MathTree.identity:
+                string = "(+" + left + ")"
+            elif self.function == MathTree.negate:
+                string = "(-" + left + ")"
+            elif self.function == MathTree.factorial:
+                string = left + "!"
+    
         return string
     
     @staticmethod
@@ -646,7 +691,7 @@ class MathTree:
         #print(list_tree)
         
         
-        # everything is now nicely divided up. Turn into tree.
+        # everything is now nicely divided up. Turn into a tree.
         
         def treeify(maths_tree_list:list, parent_name:str):
             n = len(maths_tree_list)
@@ -693,6 +738,7 @@ class MathTree:
                 # unary operation
                 left = maths_tree_list[0]
                 right = maths_tree_list[1]
+                print("left",left, "right",right)
             
                 leaf = None
             
@@ -737,8 +783,10 @@ class MathTree:
                             
                     if c == '+':
                         operand.function = MathTree.identity
+                        print("here 1 ")
                     elif c == '-':
                         operand.function = MathTree.negate
+                        print("here 0 ")
                     elif c == '!':
                         operand.function = MathTree.factorial
                 
@@ -885,10 +933,10 @@ def parse_maths_string(string:str, parent_name:str):
     maths_tree = MathTree.construct_tree(string, parent_name)
     
     val = maths_tree.get_tree_value(parent_name)
-    #print()
     #print("String:",string)
     #print("Maths Tree:", maths_tree)
     #print("result:",val)
+    #print()
     
     return val
 
