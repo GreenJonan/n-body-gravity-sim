@@ -160,20 +160,21 @@ class Vector:
         """
         Given a radius component and a set of angles, return the relevant co-ordinate vector.
         """
-        dim = len(angles) + 1
+        dims = len(angles) + 1
         sin_t = 1
-        vecs = [0]*dim
+        vecs = [0]*dims
     
         i = 0
-        while i < dim:
+        while i < dims-1:
             t = abs(angles[i])  #warning may be non float/int
             if i + 1 == dims:
                 t = t % 2*math.pi
             else:
                 t = t % math.pi
-            vecs[i] = r * sint_t * math.cos(t)
-            sint_t = sint_t * math.sin(t)
+            vecs[i] = radius * sin_t * math.cos(t)
+            sin_t = sin_t * math.sin(t)
             i += 1
+        vecs[i] = radius * sin_t
         return Vector(vecs)
     
 

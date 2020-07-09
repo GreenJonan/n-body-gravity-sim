@@ -41,6 +41,9 @@ name_str = "name"
 anch_str = "anchor"
 
 vect_str = "vector"
+polar_str = "polar"
+cart_str = "cartesian"
+
 
 col_str = "colour"
 rgb_str = "rgb"
@@ -67,6 +70,25 @@ title_size_str = "titleSize"
 
 
 
+# variable parser
+
+def parse_variables(string:str, parent_name:str, variables:dict):
+    """
+    Given a set of variables and values, place them into the variables dictionary.
+    Variables are specified by '=' rather than ':', which indicates attributes.
+    """
+    key_values = parse.parse_key_values(string, parent_name, sep="=")
+
+    for pair in key_values:
+        name = pair[0]
+        value = pair[1]
+
+        val = parse.parse_maths_string(value, parent_name, variables)
+        variables[name] = val
+    return variables
+
+
+
 
 ######################
 
@@ -75,35 +97,53 @@ title_size_str = "titleSize"
 ####
 
 
-def parse_vector(string:str, parent_name:str):
+def parse_vector(string:str, parent_name:str, variables:dict):
     """
-        Given a string representation of a vector parse it.
-        """
-    string_ls = string.split(",")
-    n = len(string_ls)
+    Given a string representation of a vector parse it.
+    """
+    key_values = parse.parse_key_values(string, parent_name)
     
-    vec = [0] * n
-    i = 0
-    while i < n:
-        sub_str = string_ls[i]
+    if len(key_values) != 1:
+        raise ValueError("\nFile Trace: {0}\nInvalid number of Vector attributes: {1}"\
+                         .format(parent_name, string))
+    else:
+        name = key_values[0][0]
+        value = key_values[0][1]
         
-        if n == 1 and sub_str == '':
-            raise ValueError("\nStack Trace: {0}\nCannot Make vector of zero length.".format(parent_name))
-        else:
-            tmp = parse.parse_maths_string(sub_str, parent_name)
-            if tmp == None:
-                raise ValueError("\nStack Trace: {0}\nMissing vector component.\n '{1}'".format(string))
+        string_ls = value.split(",")
+        n = len(string_ls)
+    
+        vec = [0] * n
+        i = 0
+        while i < n:
+            sub_str = string_ls[i]
+        
+            if sub_str == '':
+                raise ValueError("\nStack Trace: {0}\nCannot Make vector of zero length."\
+                                 .format(parent_name))
             else:
-                vec[i] = tmp
-        
-        i += 1
-    
-    return vector.Vector(vec)
+                tmp = parse.parse_maths_string(sub_str, parent_name, variables)
+                if tmp == None:
+                    raise ValueError("\nStack Trace: {0}\nMissing vector component.\n '{1}'"\
+                                    .format(string))
+                else:
+                    vec[i] = tmp
+            i += 1
+                
+        if name == "" or name == cart_str:
+            return vector.Vector(vec)
+        elif name == polar_str:
+            radius = vec[0]
+            angles = vec[1:len(vec)]
+            return vector.Vector.polar_vector(radius, angles)
+        else:
+            raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'."\
+                            .format(parent_name, name))
 
 
 
 
-def parse_colour(string:str, parent_name:str):
+def parse_colour(string:str, parent_name:str, variables:dict):
     """
     Parse string representation of a colour.
         
@@ -125,7 +165,7 @@ def parse_colour(string:str, parent_name:str):
         vec = [0]*len(cols)
         i = 0
         while i < len(cols):
-            tmp = parse.parse_maths_string(cols[i], parent_name)
+            tmp = parse.parse_maths_string(cols[i], parent_name, variables)
             if tmp == None:
                 raise ValueError("\nStack Trace: {0}\nMissing colour component.\n '{1}'".format(string))
             else:
@@ -146,7 +186,7 @@ def parse_colour(string:str, parent_name:str):
 
 
 
-def parse_constants(string:str, parent_name:str):
+def parse_constants(string:str, parent_name:str, variables:dict):
     key_values = parse.parse_key_values(string, parent_name)
     consts = constants.Constants()
 
@@ -156,38 +196,38 @@ def parse_constants(string:str, parent_name:str):
         my_name = parent_name + ">" + name
 
         if name == g_str:
-            tmp = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 consts.G = tmp
         elif name == e_str:
-            tmp = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name,variables)
             if tmp != None:
                 consts.E = tmp
         elif name == R_str:
-            tmp = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 consts.R = tmp
         
         elif name == dist_err_str:
-            tmp = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 consts.distance_error = tmp
         
         elif name == t_del_str:
-            tmp = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 consts.time_delay = int(tmp)
         elif name == update_num_str:
-            tmp = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 consts.update_number = int(tmp)
         elif name == time_step_str:
-            tmp = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 consts.time_step = tmp
 
         elif name == max_dist_str:
-            tmp = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 consts.max_dist = tmp
 
@@ -202,7 +242,7 @@ def parse_constants(string:str, parent_name:str):
 
 
 
-def parse_universe(string:str, children_obj, parent_name:str):
+def parse_universe(string:str, children_obj, parent_name:str, variables:dict):
     """
     Given a string that represents a universe object, and it's children objects,
     return a universe object.
@@ -259,7 +299,7 @@ def parse_universe(string:str, children_obj, parent_name:str):
             energy_consv = get_bool(value, my_name)
 
         elif keyword == max_v_str:
-            max_speed = parse.parse_maths_string(value, my_name)
+            max_speed = parse.parse_maths_string(value, my_name, variables)
         elif keyword == relat_str:
             relativistic = True
             if value != "":
@@ -285,11 +325,12 @@ def parse_universe(string:str, children_obj, parent_name:str):
 
 
 
-def parse_body(string:str, child_obj:list, parent_name:str):
+def parse_body(string:str, child_obj:list, parent_name:str, variables:dict):
     """
     Given a string that represents a body object, and it's children objects, 
     return a body object.
     """
+    
     key_values = parse.parse_key_values(string, parent_name)
     #print("Body objects:", child_obj)
     X = None
@@ -317,17 +358,17 @@ def parse_body(string:str, child_obj:list, parent_name:str):
             V = get_vector_key_value(value, child_obj, key_name)
         
         elif keyword == m_str:
-            tmp = parse.parse_maths_string(value, key_name)
+            tmp = parse.parse_maths_string(value, key_name, variables)
             if tmp != None:
                 mass = tmp
 
         elif keyword == q_str:
-            tmp = parse.parse_maths_string(value, key_name)
+            tmp = parse.parse_maths_string(value, key_name, variables)
             if tmp != None:
                 charge = tmp
 
         elif keyword == r_str:
-            tmp = parse.parse_maths_string(value, key_name)
+            tmp = parse.parse_maths_string(value, key_name, variables)
             if tmp != None:
                 radius = tmp
 
@@ -365,7 +406,7 @@ def parse_body(string:str, child_obj:list, parent_name:str):
 
 
 
-def parse_screen(string:str, child_obj:list, parent_name):
+def parse_screen(string:str, child_obj:list, parent_name, variables:dict):
     """
     Given a string that represents a screen object, and a set of the subchildren,
     return the screen object.
@@ -392,17 +433,17 @@ def parse_screen(string:str, child_obj:list, parent_name):
         my_name = parent_name + ">" + name
 
         if name == w_str:
-            tmp = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 width = int( tmp )
         
         elif name == h_str:
-            tmp = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 height = int( tmp )
 
         elif name == scl_str:
-            tmp = parse.parse_maths_string(value,my_name)
+            tmp = parse.parse_maths_string(value,my_name, variables)
             if tmp != None:
                 scale = tmp
 
@@ -415,11 +456,11 @@ def parse_screen(string:str, child_obj:list, parent_name):
             msg = value
 
         elif name == title_size_str:
-            tmp = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 title_size = int( tmp )
         elif name == label_size_str:
-            tmp = parse.parse_maths_string(value, my_name)
+            tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 label_size = int( tmp )
 

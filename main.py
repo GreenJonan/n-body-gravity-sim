@@ -51,7 +51,9 @@ if f == None:
 #f = open(file_name, "r")
 parse_tree = parser.parse_file(f, file_name)
 
-objects = parse_tree.objectify()
+variables = parser.default_variables
+
+objects = parse_tree.objectify(variables)
 
 
 constants = objects[0]

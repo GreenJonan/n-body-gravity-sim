@@ -1,6 +1,7 @@
 #import body, colour, constants, draw, universe, vector
 from modules import body, colour, draw, universe, vector, constants
 from modules.parser import objects, special_parsers as pars
+import math
 
 import sys
 
@@ -10,6 +11,7 @@ extension = ".sys"
 """
 keywords:
     file
+    variables
     constants
     universe
     body
@@ -22,6 +24,7 @@ keywords:
 # keywords
 
 file_str = "root"
+var_str = "variables"
 const_str = "constants"
 uni_str = "universe"
 body_str = "body"
@@ -32,6 +35,9 @@ col_str = "colour"
 
 
 
+
+
+default_variables = {"pi":math.pi, "au":1.496e11}
 
 
 
@@ -60,7 +66,7 @@ class ParseTree:
 
     ####
 
-    def get_child_objects(self, parent_name) -> list:
+    def get_child_objects(self, parent_name, variables) -> list:
         """
         Suppose self is already parsed. Extract the key data and objects. Return list of objects in self.
         
@@ -71,7 +77,7 @@ class ParseTree:
     
         i = 0
         while i < N:
-            tmp_ls = self.children[i].objectify(parent_name)
+            tmp_ls = self.children[i].objectify(variables, parent_name)
             if len(tmp_ls) > 1:
                 # there is no reason the lists shouldn't be length 1
                 raise ValueError("\nStack Trace: {0}\nIncorrectly objectified child objects. '{1}'"\
@@ -83,15 +89,14 @@ class ParseTree:
     
     
     
-    def objectify(self, parent_name=">") ->list:
+    def objectify(self, variables, parent_name=">") ->list:
         """
         Turn self into an object.
         """
         
         my_name = parent_name + self.name
-        child_objects = self.get_child_objects(my_name + ">")
+        child_objects = self.get_child_objects(my_name + ">", variables)
         #print(parent_name, my_name)
-        
         
         if self.name == file_str:
             # return child objects, need constants, one universe, one screen to project.
@@ -109,27 +114,30 @@ class ParseTree:
                     pass #print("Ignoring:", obj)
                 i += 1
             return results
-    
+        
+        
+        elif self.name == var_str:
+            return [ objects.parse_variables(self.string, my_name, variables) ]
     
         elif self.name == uni_str:
-            return [ objects.parse_universe(self.string, child_objects, my_name) ]
+            return [ objects.parse_universe(self.string, child_objects, my_name, variables) ]
                 
         elif self.name == body_str:
-            return [ objects.parse_body(self.string, child_objects, my_name) ]
+            return [ objects.parse_body(self.string, child_objects, my_name, variables) ]
 
         elif self.name == const_str:
-            return [objects.parse_constants(self.string, my_name)]
+            return [objects.parse_constants(self.string, my_name, variables)]
             # parse constants
 
         elif self.name == vect_str:
-            return [ objects.parse_vector(self.string, my_name) ]
+            return [ objects.parse_vector(self.string, my_name, variables) ]
 
         elif self.name == screen_str:
-            return [ objects.parse_screen(self.string, child_objects, my_name) ]
+            return [ objects.parse_screen(self.string, child_objects, my_name, variables) ]
             # parse screen object
                 
         elif self.name == col_str:
-            return [ objects.parse_colour(self.string, my_name) ]
+            return [ objects.parse_colour(self.string, my_name, variables) ]
                 
         else:
             raise TypeError("\nStack Trace: {0}\nUnknown Object type '{1}' in system file: {2}"\

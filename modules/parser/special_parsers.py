@@ -4,10 +4,15 @@ Made is such that when the input file is parsed, ALL NEW LINE ('\n') characters 
 with line break characters.
 """
 
+"""
+Specific variables specified in the variables section of the .sys files (NOT IMPLEMENTED), or default values,
+such as pi, can be used to evaluate numeric expressions in the maths parser.
+"""
+
+
 line_break = ';' # other option is '\n', but then need to change all of parse_file_section function.
 exponent = 'e'
 verbatim = '"'
-
 
 
 
@@ -29,7 +34,7 @@ def is_white_space(c:str):
 #####   Transform keyword, value pairs into tuples.
 
 
-def parse_key_values(string:str, parent_name:str):
+def parse_key_values(string:str, parent_name:str, sep=':'):
     """
     Parse a:b into (a,b). Each section
     """
@@ -136,7 +141,7 @@ def parse_key_values(string:str, parent_name:str):
                 has_char = True
                 i = j
         
-        elif c == ":":
+        elif c == sep:
             if seen_keyword:
                 ######
                 # find beggining and end part of the string
@@ -665,20 +670,24 @@ class MathTree:
     """
     
     @staticmethod
-    def get_tree_leaf(string:str, parent_name:str):
+    def get_tree_leaf(string:str, parent_name:str, variables:dict):
         value = 0.0
         try:
             value = float(string)
         except ValueError:
-            tmp_str = "Cannot connvert non-numeric string '{1}' into float expression."
-            tmp_str1 = "\nStack Trace: {0}\n" + tmp_str
-            raise ValueError(tmp_str1.format(parent_name, string))
+            # word may be a variable.
+            try:
+                value = variables[string]
+            except KeyError:
+                tmp_str = "Cannot connvert non-numeric string '{1}' into float expression."
+                tmp_str1 = "\nStack Trace: {0}\n" + tmp_str
+                raise ValueError(tmp_str1.format(parent_name, string))
             
         return MathTree(value)
 
 
     @staticmethod
-    def construct_tree(string:str, parent_name:str):
+    def construct_tree(string:str, parent_name:str, variables:dict):
         """
         Given a string, parse it up by parametres and operands. -> MathList.get_maths_list() function.
         Then divide it up into a valid MathTree object.
@@ -696,7 +705,7 @@ class MathTree:
         def treeify(maths_tree_list:list, parent_name:str):
             n = len(maths_tree_list)
             if n == 1:
-                return MathTree.get_tree_leaf(maths_tree_list[0], parent_name)
+                return MathTree.get_tree_leaf(maths_tree_list[0], parent_name, variables)
             elif n == 3:
                 left = maths_tree_list[0]
                 right = maths_tree_list[2]
@@ -706,12 +715,12 @@ class MathTree:
                 if isinstance(left, list):
                     left_leaf = treeify(left, parent_name)
                 else:
-                    left_leaf = MathTree.get_tree_leaf(left, parent_name)
+                    left_leaf = MathTree.get_tree_leaf(left, parent_name, variables)
                 
                 if isinstance(right, list):
                     right_leaf = treeify(right, parent_name)
                 else:
-                    right_leaf = MathTree.get_tree_leaf(right, parent_name)
+                    right_leaf = MathTree.get_tree_leaf(right, parent_name, variables)
                       
                 operand = MathTree()
                 operand.params = 2
@@ -919,7 +928,7 @@ class MathTree:
 
 
 
-def parse_maths_string(string:str, parent_name:str):
+def parse_maths_string(string:str, parent_name:str, variables:dict):
     """
     If a string is written with numbers and numeric operations, get the computed float value.
     :input: maths string
@@ -927,7 +936,7 @@ def parse_maths_string(string:str, parent_name:str):
     """
     if string == "":
         return None
-    maths_tree = MathTree.construct_tree(string, parent_name)
+    maths_tree = MathTree.construct_tree(string, parent_name, variables)
     
     val = maths_tree.get_tree_value(parent_name)
     #print("String:",string)
