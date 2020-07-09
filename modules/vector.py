@@ -154,6 +154,30 @@ class Vector:
         return Vector([0] * dim)
 
 
+
+    @staticmethod
+    def polar_vector(radius:float, angles:list):
+        """
+        Given a radius component and a set of angles, return the relevant co-ordinate vector.
+        """
+        dim = len(angles) + 1
+        sin_t = 1
+        vecs = [0]*dim
+    
+        i = 0
+        while i < dim:
+            t = abs(angles[i])  #warning may be non float/int
+            if i + 1 == dims:
+                t = t % 2*math.pi
+            else:
+                t = t % math.pi
+            vecs[i] = r * sint_t * math.cos(t)
+            sint_t = sint_t * math.sin(t)
+            i += 1
+        return Vector(vecs)
+    
+
+
     #####   Random vectors
 
     def random_float_vector(dim:int):
