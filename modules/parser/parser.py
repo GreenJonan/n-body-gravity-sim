@@ -204,7 +204,6 @@ def parse_file_section(f, parse_root:ParseTree):
             
             # comment parser
             if c == '[':
-                print("HERERERE")
                 #comment while open > 0, all closed means no longer comment.
                 open_coms = 1
                 

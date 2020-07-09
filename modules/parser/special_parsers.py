@@ -358,15 +358,20 @@ class MathList:
                 else:
                     if prev_char == exponent and (c =='+' or c == '-'):
                         pass
-                    elif param_word:
-                        if word_start == i:
-                            pass # don't add empty/non-parameter
-                        else:
-                            new_str = string[word_start:i]
-                            parse.add_elem(new_str)
+                    else:
+                        if c == '-' and (prev_char == '*' or prev_char == '/' or prev_char == '^'):
+                            # allows for x*-y syntax
+                            param_word = True
+                    
+                        if param_word:
+                            if word_start == i:
+                                pass # don't add empty/non-parameter
+                            else:
+                                new_str = string[word_start:i]
+                                parse.add_elem(new_str)
                         
-                        param_word = False
-                        word_start = i
+                            param_word = False
+                            word_start = i
 
             else:
                 if is_white_space(c) and word_start == i:
@@ -567,7 +572,7 @@ class MathTree:
     
         result = 1
         while x > 0:
-            result * x
+            result = result * x
             x -= 1
         return result
 
@@ -695,7 +700,7 @@ class MathTree:
                 right_function = False
                 
                 left_param = False
-                right_param = True
+                right_param = False
             
                 if isinstance(left, list):
                     leaf = treeify(left, parent_name)
@@ -719,8 +724,8 @@ class MathTree:
                 
 
                 if (left_param and right_param) or (not left_param and not right_param):
-                    raise ValueError("Stack Trace: {0}\nTree incorrectly parsed, two parameters, no operand:\n '{1}' '{2}'"\
-                                     .format(parent_name, left_param, right_param))
+                    raise ValueError("\nStack Trace: {0}\nTree incorrectly parsed, two parameters, no operand:\n '{1}' '{2}'"\
+                                     .format(parent_name, left, right))
                 else:
                     operand = MathTree()
                     operand.params = 1
@@ -736,6 +741,7 @@ class MathTree:
                         operand.function = MathTree.negate
                     elif c == '!':
                         operand.function = MathTree.factorial
+                
                             
                     operand.left_child = leaf
                     #print("Leaf:",leaf)

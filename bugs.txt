@@ -7,7 +7,11 @@ Zoom into moon, when the sun approaches certain points in it’s orbit, it appea
 Zoom ~ 2^9, or ~2^10
 Also, the angle between the earth and sun is about 30 & 45 (not 60!) degrees from each horizontal/vertical axis.
 
+—> Fixed: 9/7/20, Stopped rendering objects when they are not on the screen.
 
+
+
+2).
 
 pygame.draw.circle(self.screen, body.colour, pix_centre, r)
 OverflowError: signed integer is less than minimum
@@ -15,4 +19,10 @@ OverflowError: signed integer is less than minimum
 (-1260906465131, -292374324) in pixels
 
 This implies that there exists values such that pygame is no longer able to draw objects.
-To-do: delete objects when they exceed some boundary, & don’t draw if there absolute values are no within some threshold.
+—> Fixed: 9/7/20, stop drawing objects when their radius is larger than a standard non-long integer. Draw them as a single pixel.
+
+
+
+3).
+
+Objects that approach another object get flung out of their orbits. Error likely arises from the fact that the forces follow the inverse square law and approach infinity.

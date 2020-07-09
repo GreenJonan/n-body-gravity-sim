@@ -35,7 +35,7 @@ file_name = ""
 f = None
 
 if len(args) > 1:
-    f_name = args[1]
+    file_name = args[1]
     try:
         f = open(file_name, "r")
     except FileNotFoundError:

@@ -35,7 +35,7 @@ m_str = "mass"
 q_str = "charge"
 r_str = "radius"
 name_str = "name"
-
+anch_str = "anchor"
 
 vect_str = "vector"
 
@@ -286,6 +286,8 @@ def parse_body(string:str, child_obj:list, parent_name:str):
     col = colour.black
     name = ""
     
+    anchor = False
+    
     
     for pair in key_values:
         keyword = pair[0]
@@ -319,6 +321,11 @@ def parse_body(string:str, child_obj:list, parent_name:str):
 
         elif keyword == col_str:
             col = get_colour_key_value(value, child_obj, key_name)
+        
+        elif keyword == anch_str:
+            anchor = True
+            if value != "":
+                anchor = get_bool(value, parent_name)
         else:
             raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'"\
                            .format(parent_name, keyword))
@@ -332,7 +339,12 @@ def parse_body(string:str, child_obj:list, parent_name:str):
                          .format(parent_name, string))
 
     id = -1
-    return body.Body(id,X, V, mass, radius, charge, col, name)
+    b = body.Body(id,X, V, mass, radius, charge, col, name)
+
+    # final adjustments
+    if anchor:
+        b.toggle_anchor()
+    return b
 
 
 

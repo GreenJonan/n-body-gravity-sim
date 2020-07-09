@@ -42,6 +42,7 @@ class UniverseScreen:
         self.proj = None
     
         self.show_zoom = False
+        self.updated_default_centre = False
     
     
     
@@ -118,13 +119,19 @@ class UniverseScreen:
     
     
     
-    def update_origin_tracking(self, U:u.Universe):
+    def update_origin_tracking(self, U:u.Universe, force_update=False):
         """
         Given the current object being track, self.track_id, update the pixel centre.
         """
     
         origin = None
         if self.track_id < 0:
+            """
+            if force_update or not self.updated_default_centre:
+                origin = self.get_origin(U.centre)
+                self.updated_default_centre = True
+            else:
+            """
             return
         
         elif self.track_id == 0:
@@ -140,9 +147,9 @@ class UniverseScreen:
 
     ####   TRACKING FUNCTIONS
 
-    def track_origin(self):
+    def track_universe_origin(self, U:u.Universe):
         self.track_id = -1
-        self.centre = (0,0)
+        self.centre = self.get_origin(U.centre)
 
     def track_centre_of_mass(self, U:u.Universe):
         self.track_id = 0
@@ -156,7 +163,7 @@ class UniverseScreen:
 
     def update_tracking(self, U:u.Universe, id:int=-1):
         if id < 0:
-            self.track_origin()
+            self.track_universe_origin(U)
         elif id == 0:
             self.track_centre_of_mass(U)
         else:

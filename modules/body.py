@@ -42,6 +42,8 @@ class Body:
         self.charge = q
         self.id = id
         self.colour = colour
+        
+        self.anchor = False
 
         self.name = name
 
@@ -100,6 +102,10 @@ class Body:
         return  - R_const * area * vel.norm() * vel
 
 
+
+
+    def toggle_anchor(self):
+        self.anchor = not self.anchor
 
 
 

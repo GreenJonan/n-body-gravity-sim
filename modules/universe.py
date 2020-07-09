@@ -258,17 +258,20 @@ class Universe:
         i = 0
         while i < N:
             bod = self.bodies[i]
+            
             if isinstance(bod, body.Body):
-                # Apply numeric method
-                self.runge_kutta_method(bod, t)
                 
-                if self.conserve_energy:
-                    """
-                    Need to implement field potentials and kinetic enegy.
-                    U+K = const, U potential, K kinetic
-                    
-                    """
-                    NotImplemented
+                # update only if non-anchor:
+                if not bod.anchor:
+                    # Apply numeric method
+                    self.runge_kutta_method(bod, t)
+                
+                    if self.conserve_energy:
+                        """
+                        Need to implement field potentials and kinetic enegy.
+                        U+K = const, U potential, K kinetic
+                        """
+                        NotImplemented
             i += 1
         return None
 
