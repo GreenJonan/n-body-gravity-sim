@@ -56,6 +56,7 @@ objects = parse_tree.objectify()
 
 constants = objects[0]
 universe = objects[1]
+universe.conform_body_speeds()
 screen = objects[2]
 
 

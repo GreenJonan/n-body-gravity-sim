@@ -200,8 +200,8 @@ class Universe:
             F = self.net_force(obj.id, X, V)
 
             if self.relativistic and self.max_speed > 0:
-                mass = self.lorentz_factor(V) * obj.mass)
-                force = F - vector.Vector.inner_product(V,F)*V / self.max_speed^2
+                mass = self.lorentz_factor(V) * obj.mass
+                force = F - vector.Vector.inner_product(V,F)*V / (self.max_speed * self.max_speed)
                 return force/mass
             else:
                 return F * ( 1 / obj.mass)
@@ -309,11 +309,33 @@ class Universe:
             raise ValueError("\nCannot find lorentz factor for universe with Speed Limit of 0.")
         else:
             v_sqr = vector.Vector.inner_product(v,v)
-            c_sqr = self.max_speed^2
+            c_sqr = self.max_speed * self.max_speed
             if v_sqr > c_sqr:
                 raise ValueError("\nVelocity faster than the Universal Speed limit.\n  Vector: {0}\n  Max Speed: {1}"\
                                  .format(v,self.max_speed))
             return 1 / math.sqrt(1 - v_sqr/c_sqr)
+
+
+    def conform_body_speeds(self):
+        c = self.max_speed
+        if c > 0:
+            for bod in self.bodies:
+                v = bod.V.norm()
+
+                if v > c:
+                    name = ""
+                    if bod.name != "":
+                        name = bod.name
+                    else:
+                        name = "Body " + str(bod.id)
+                    print("Warning: {0} has speed faster than Universal Speed limit c={1}\n V={2}, v={3}\n Adjusting speed..."\
+                          .format(name, c, bod.V, v))
+
+                    tmp_V = bod.V * (c/v)
+                    bod.V = tmp_V
+                    bod.V_prev = tmp_V
+        return
+
 
 
 

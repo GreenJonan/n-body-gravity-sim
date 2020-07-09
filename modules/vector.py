@@ -106,6 +106,13 @@ class Vector:
         return self * other
 
 
+    def __truediv__(self, other):
+        return self * (1/other)
+    
+    def __truerdiv__(self, other):
+        return self / other
+
+
     def __eq__(self, other):
         if isinstance(other, type(None)):
             return False

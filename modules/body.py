@@ -12,6 +12,8 @@ from modules import colour
 #import constants
 #import colour
 
+import math
+
 
 class Body:
     def __init__(self, id, X0, V0, m=1, r=1, q=0, colour=colour.black, name=""):
@@ -106,6 +108,14 @@ class Body:
 
     def toggle_anchor(self):
         self.anchor = not self.anchor
+
+
+    def lorentz_factor(self, c:float):
+        # get the lorentz factor for self
+        # y = 1/sqrt(1- (v.v)/c^2)
+        # c is the maximum speed for light.
+
+        return 1/math.sqrt(1- vector.Vector.inner_product(self.V, self.V)/c^2)
 
 
 

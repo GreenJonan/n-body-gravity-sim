@@ -27,6 +27,9 @@ centre_str = "centre"
 rest_str = "resistance"
 energy_consv_str = "conserveEnergy"
 
+max_v_str = "maxSpeed"
+relat_str = "relativistic"
+
 
 # body
 x_str = "X"
@@ -231,6 +234,9 @@ def parse_universe(string:str, children_obj, parent_name:str):
     energy_consv = False
     
     passed_dim = False
+    
+    max_speed = -1
+    relativistic = False
 
 
     for pair in key_values:
@@ -252,6 +258,12 @@ def parse_universe(string:str, children_obj, parent_name:str):
         elif keyword == energy_consv_str:
             energy_consv = get_bool(value, my_name)
 
+        elif keyword == max_v_str:
+            max_speed = parse.parse_maths_string(value, my_name)
+        elif keyword == relat_str:
+            relativistic = True
+            if value != "":
+                relativistic = get_bool(value, my_name)
         else:
             raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'"\
                            .format(parent_name, keyword))
@@ -262,6 +274,9 @@ def parse_universe(string:str, children_obj, parent_name:str):
     uni = universe.Universe(centre, *bodies)
     uni.resistance = resistance
     uni.conserve_energy = energy_consv
+
+    uni.relativistic = relativistic
+    uni.max_speed = max_speed
     return uni
 
 
@@ -427,7 +442,7 @@ def get_vector_key_value(value:str, ls:list, parent_name:str):
     elif value[0] != '#':
         err = True
     if err:
-        raise SyntaxError("\nStack Trace: {0}\nIncorrectly parsed Vector string '{2}'"\
+        raise SyntaxError("\nStack Trace: {0}\nIncorrectly parsed Vector string '{1}'"\
                             .format(parent_name, value))
 
     pos = value.lstrip('#')
@@ -449,7 +464,7 @@ def get_colour_key_value(value:str, ls:list, parent_name:str):
     elif value[0] != '#':
         err = True
     if err:
-        raise SyntaxError("\nStack Trace: {0}\nIncorrectly parsed Colour string '{2}'"\
+        raise SyntaxError("\nStack Trace: {0}\nIncorrectly parsed Colour string '{1}'"\
                           .format(parent_name, value))
 
     pos = value.lstrip('#')
