@@ -610,7 +610,7 @@ class MathTree:
         return -x
     @staticmethod
     def identity(x):
-        return y
+        return x
     @staticmethod
     def factorial(X):
         x = int(X)
