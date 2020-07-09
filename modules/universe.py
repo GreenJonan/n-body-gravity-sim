@@ -15,7 +15,7 @@ from modules import vector
 from modules import constants
 from modules import colour
 
-import math
+import math,sys
 
 
 
@@ -197,12 +197,13 @@ class Universe:
         if obj.mass == 0:
             return vector.Vector.zero_vector(len(self.centre))
         else:
+            V = self.correct_velocity(V)
+            
+            # NON-RELATIVISTIC FORCES
             F = self.net_force(obj.id, X, V)
 
-            if self.relativistic and self.max_speed > 0:
-                mass = self.lorentz_factor(V) * obj.mass
-                force = F - vector.Vector.inner_product(V,F)*V / (self.max_speed * self.max_speed)
-                return force/mass
+            if self.relativistic:
+                return self.relativistic_acceleration(obj.mass, V, F)
             else:
                 return F * ( 1 / obj.mass)
 
@@ -254,6 +255,7 @@ class Universe:
         
         new_v = obj.V + del_v
         new_x = obj.X + del_x
+        new_v = self.correct_velocity(new_v)
 
         # Update Position and Velocity Vectors
         obj.X_prev = obj.X
@@ -273,7 +275,6 @@ class Universe:
         """
         Use numeric methods to update the velocities and positions of ALL of the Body objects.
         """
-        #print()
         N = len(self.bodies)
         i = 0
         while i < N:
@@ -298,6 +299,24 @@ class Universe:
 
 
 
+    # speed limit
+    
+    def correct_velocity(self, V):
+        # SOURCE OF POTENTIAL ERRORS: del_x may not correct in runge-kutta method.
+        c = self.max_speed
+        if self.max_speed >= 0:
+            v = V.norm()
+            if v > c:
+                V = V * (c/v)
+        return V
+
+
+
+
+
+    # relativistic properties
+
+
     def lorentz_factor(self, v:vector.Vector) -> float:
         """
         Find the lorentz factor for a particular speed.
@@ -311,14 +330,29 @@ class Universe:
             v_sqr = vector.Vector.inner_product(v,v)
             c_sqr = self.max_speed * self.max_speed
             if v_sqr > c_sqr:
-                raise ValueError("\nVelocity faster than the Universal Speed limit.\n  Vector: {0}\n  Max Speed: {1}"\
-                                 .format(v,self.max_speed))
+                raise ValueError("\nVelocity faster than the Universal Speed limit.\n  Vector: {0}\n  Object Speed: {1}\n  Max Speed: {2}"\
+                                 .format(v, math.sqrt(v_sqr), self.max_speed))
+            elif v_sqr == c_sqr:
+                return float(sys.maxsize)
             return 1 / math.sqrt(1 - v_sqr/c_sqr)
+
+
+    def relativistic_acceleration(self, mass, V, force):
+        """
+        See here for more information about relativistic forces:
+        https://en.wikipedia.org/wiki/Relativistic_mechanics#Force
+        """
+        # SPECIAL RELATIVISTIC CALCULATIONS
+        if self.max_speed > 0:
+            mass = self.lorentz_factor(V) * mass
+            force = force - vector.Vector.inner_product(V,force)*V / (self.max_speed * self.max_speed)
+        return force/mass
+
 
 
     def conform_body_speeds(self):
         c = self.max_speed
-        if c > 0:
+        if (c > 0 and self.relativistic) or (c >= 0 and not self.relativistic):
             for bod in self.bodies:
                 v = bod.V.norm()
 
@@ -334,16 +368,15 @@ class Universe:
                     tmp_V = bod.V * (c/v)
                     bod.V = tmp_V
                     bod.V_prev = tmp_V
+        elif self.relativistic:
+            raise ValueError("\nUniverse set to relativistic, however, there exists no valid positive universal speed limit.")
         return
 
 
 
 
 
-"""
-See here for more information about relativistic forces: 
-https://en.wikipedia.org/wiki/Relativistic_mechanics#Force
-"""
+
 
 
 

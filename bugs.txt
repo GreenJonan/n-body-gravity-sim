@@ -26,3 +26,8 @@ This implies that there exists values such that pygame is no longer able to draw
 3).
 
 Objects that approach another object get flung out of their orbits. Error likely arises from the fact that the forces follow the inverse square law and approach infinity.
+
+
+4).
+
+Set universal speed limit to zero. Objects appear to still be able to move. This error occurs due to the runge-kutta method and the fact that kxn is effectively velocity due to the force. However, the velocity cannot exceed 0, and kxn may be non-zero.
