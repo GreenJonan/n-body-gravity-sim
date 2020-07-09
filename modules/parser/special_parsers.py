@@ -322,29 +322,36 @@ class MathList:
         n = len(string)
 
         has_char = False
+        word_added = False
         
         #print()
         #print("Decompose:", string)
 
         i = 0
         word_start = i
+        word_end = i
+        
         while i < n:
             c = string[i]
+            #print(":",c, string[word_start:word_end])
             
             if maths_syntax(c):
                 if c == ')':
                     raise SyntaxError("\nStack Trace: {0}\nClose bracket has no opening bracket in '{1}'"\
                                       .format(parent_name, string))
                 elif c == '(':
-                    if has_char:
+                    if word_start != word_end:
                         if param_word:
                             raise SyntaxError("\nStack Trace: {0}\nUndefined function between two numbers: '{1}'"\
                                               .format(parent_name, string))
                         else:
                             # add function
-                            new_str = string[word_start:i]
+                            #print("Adding operand:",string[word_start:word_end])
+                            new_str = string[word_start:word_end]
                             parse.add_elem(new_str)
-                    
+                
+                    params = False
+                    #next element cannot be params!
                     
                     # Read opening bracket sub-syntax
                     open_brac_num = 1
@@ -369,32 +376,45 @@ class MathList:
                         i = j
                     
                     word_start = i+1
+                    word_end = word_start
+                    word_added = True
+
                     has_char = True
                     param_word = False
                 
                 else:
                     has_char = True # allows for -() syntax
+                    
                     if prev_char == exponent and (c =='+' or c == '-'):
-                        pass
+                        word_end += 1
                     else:
-                        if c == '-' and (prev_char == '*' or prev_char == '/' or prev_char == '^'):
+                        if (c == '-' or c =='+')\
+                            and (prev_char == '*' or prev_char == '/' or prev_char == '^'):
                             # allows for x*-y syntax
                             param_word = True
                     
                         if param_word:
-                            if word_start == i:
+                            #print("Adding parametre:",string[word_start:word_end])
+                            if word_start == word_end:
                                 pass # don't add empty/non-parameter
                             else:
-                                new_str = string[word_start:i]
+                                new_str = string[word_start:word_end]
                                 parse.add_elem(new_str)
                         
                             param_word = False
                             word_start = i
+                            word_end = word_start + 1
+                        else:
+                            word_end = i + 1
 
             else:
+                """
                 if is_white_space(c) and word_start == i:
+                    # if word is set to start at i, but i is a white space, they move to next character
                     word_start += 1
+                    print("here")
                 else:
+                    print("there")
                     if not param_word:
                         new_str = string[word_start:i]
                         parse.add_elem(new_str)
@@ -404,16 +424,54 @@ class MathList:
             
                     if not is_white_space(c):
                         has_char = True
-
+                """
+                if is_white_space(c):
+                    # if is white space add previous word
+                    if word_start != word_end:
+                        #print("string:",string[word_start:word_end])
+                        """
+                        # add previous word
+                        new_str = string[word_start:word_end]
+                        parse.add_elem(new_str)
+                        word_start = i+1
+                        word_end = word_start
+                        word_added = True
+                        """
+                        pass
+                    else:
+                        # move to next character, since white space
+                        word_start += 1
+                        word_end = word_start
+                    #print("here")
+                else:
+                    has_char = True
+                    
+                    if not param_word:
+                        #print("Adding operand:",string[word_start:word_end])
+                        if word_start == word_end:
+                            pass
+                        else:
+                            new_str = string[word_start:word_end]
+                            parse.add_elem(new_str)
+                        
+                        param_word = True
+                        word_start = i
+                        word_end = word_start + 1
+                        word_added = False
+                    else:
+                        word_end = i + 1
+                    
+                    
 
             i += 1
             prev_char = c
     
-        if word_start != n:
-            new_str = string[word_start:i]
+        if word_start != word_end:
+            new_str = string[word_start:word_end]
+            #print("new_str:",new_str)
             parse.add_elem(new_str)
         
-        #print(parse, string)
+        #print("P",parse, ":",string)
         return parse
 
 
@@ -672,6 +730,7 @@ class MathTree:
     @staticmethod
     def get_tree_leaf(string:str, parent_name:str, variables:dict):
         value = 0.0
+        err = False
         try:
             value = float(string)
         except ValueError:
@@ -679,9 +738,11 @@ class MathTree:
             try:
                 value = variables[string]
             except KeyError:
-                tmp_str = "Cannot connvert non-numeric string '{1}' into float expression."
-                tmp_str1 = "\nStack Trace: {0}\n" + tmp_str
-                raise ValueError(tmp_str1.format(parent_name, string))
+                err = True
+        if err:
+            tmp_str = "Cannot connvert non-numeric string '{1}' into float expression."
+            tmp_str1 = "\nStack Trace: {0}\n" + tmp_str
+            raise NameError(tmp_str1.format(parent_name, string))
             
         return MathTree(value)
 
@@ -763,7 +824,7 @@ class MathTree:
                     if maths_1func(left):
                         left_function = True
                     else:
-                        leaf = MathTree.get_tree_leaf(left, parent_name)
+                        leaf = MathTree.get_tree_leaf(left, parent_name, variables)
                         left_param = True
 
                 if isinstance(right, list):
@@ -773,7 +834,7 @@ class MathTree:
                     if maths_1func(right):
                         right_function = True
                     else:
-                        leaf = MathTree.get_tree_leaf(right, parent_name)
+                        leaf = MathTree.get_tree_leaf(right, parent_name, variables)
                         right_param = True
                 
 

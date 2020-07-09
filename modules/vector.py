@@ -167,8 +167,9 @@ class Vector:
         i = 0
         while i < dims-1:
             t = abs(angles[i])  #warning may be non float/int
-            if i + 1 == dims:
-                t = t % 2*math.pi
+            if i+1 == dims-1:
+                # this is necessary, so that the last angle corresponds to the second last component
+                t = t % (2*math.pi)
             else:
                 t = t % math.pi
             vecs[i] = radius * sin_t * math.cos(t)
