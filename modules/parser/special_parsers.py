@@ -738,7 +738,6 @@ class MathTree:
                 # unary operation
                 left = maths_tree_list[0]
                 right = maths_tree_list[1]
-                print("left",left, "right",right)
             
                 leaf = None
             
@@ -783,10 +782,8 @@ class MathTree:
                             
                     if c == '+':
                         operand.function = MathTree.identity
-                        print("here 1 ")
                     elif c == '-':
                         operand.function = MathTree.negate
-                        print("here 0 ")
                     elif c == '!':
                         operand.function = MathTree.factorial
                 
