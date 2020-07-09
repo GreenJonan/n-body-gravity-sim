@@ -234,7 +234,8 @@ while run:
         
         i = 0
         while i < constants.update_number:
-            universe.update_all_bodies(constants.time_step / constants.update_number)
+            universe.update_all_bodies(constants.time_step / constants.update_number,
+                                       constants.distance_error)
             
             """
             pass_start = earth.X.components[1] >= 0 >= earth.X_prev.components[1]\

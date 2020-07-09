@@ -7,6 +7,13 @@ Note:
     
     I have also added generalised versions of the euclidean metric and the inverse square law.
     However, they are not currently used in the main program.
+    
+    Futhur research yields this:
+    https://en.wikipedia.org/wiki/Lp_space
+    
+    This normed space has is a vector space with the generalised metric that I have implemented!
+    I don't think there exists anything nice for such generalised inner products.
+    Hence, ill stick to standard inner products whenever they need to be called.
 """
 
 
@@ -43,7 +50,7 @@ def manhattan_metric(vec1:Vec, vec2:Vec):
     return val
     
 
-def general_n_euclid_metric(vec1:Vec, vec2:Vec, N:int):
+def general_n_euclid_metric(vec1:Vec, vec2:Vec, N):
     """
     <V,U> = n_root( |v1-u1|^n + |v2-u2|^n + ... + |vn-un|^n )
             
@@ -78,19 +85,28 @@ def distance(v1:Vec, v2:Vec):
     return metric(v1,v2)
 
 
+def metric_norm(v:Vec, N):
+    val = 0
+    n = len(vec1)
+    i = 0
+    while i < n:
+        val += abs(v.components[i]) ** N
+        i += 1
+    return val **(1.0/N)
+
 
 
 ##### Physical laws
 
-def inverse_square_law(v1:Vec, v2:Vec):
+def inverse_square_law(v1:Vec, v2:Vec, dist_error):
     """
     :input: Two vectors
     :return: Vector, r_unit / r^2, where r = v2-v1
     """
-    return inverse_n_law(v1,v2)
+    return inverse_n_law(v1,v2, dist_error)
 
 
-def inverse_n_law(v1:Vec, v2:Vec, n:int=2):
+def inverse_n_law(v1:Vec, v2:Vec, dist_error, n=2):
     """
     Similar to the inverse square law, except the power in the denominator is n
     Inverse square law: Given two vectors, find r_unit * 1/r^2  ==>  r * 1/r^3
@@ -99,14 +115,16 @@ def inverse_n_law(v1:Vec, v2:Vec, n:int=2):
     :return: Vector
     """
     D = distance(v1, v2)
-    if D <= constants.dist_error:
+    if D <= dist_error:
         # Return Zero vector
         return v.Vector.zero_vector(len(v1))
     R = v2 - v1
-    return (1/D**(n+1)) * R
+    # (1/D**(n+1)) * R
+    d_pow = D**(n+1)
+    return R * (1/d_pow)
 
 
-def general_inverse_n_law(v1:Vec,v2:Vec, n:int=2, N:int=2):
+def general_inverse_n_law(v1:Vec,v2:Vec, dist_error, n=2, N=2):
     """
     Generalised form of inverse n-law. That is r_unit / ||r||^n,
     where ||r|| is the generalised N euclid metric.
@@ -114,11 +132,13 @@ def general_inverse_n_law(v1:Vec,v2:Vec, n:int=2, N:int=2):
     """
     
     D = general_n_euclid_metric(v1, v2, N)
-    if D <= constants.dist_error:
+    if D <= dist_error:
         # Return Zero vector
         return v.Vector.zero_vector(len(v1))
     R = v2 - v1
-    return (1/D**(n+1)) * R
+    # (1/D**(n+1)) * R
+    d_pow = D**(n+1)
+    return R * (1/d_pow)
 
 
 

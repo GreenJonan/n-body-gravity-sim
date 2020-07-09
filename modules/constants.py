@@ -3,6 +3,9 @@ This module is just contains various constants
 """
 import math
 
+WARNING = False
+
+
 pi = math.pi
 au_scale = 1.496e8*1000 #metres
 scale = au_scale/400  # metres = 1pixel
@@ -62,6 +65,7 @@ class Constants:
         self.time_step = t_step
 
         self.max_dist = m_dist
+    
 
     def __repr__(self):
         string = "constants {{\nG: {0}\nE: {1}\nR: {2}\ndistanceError: {3}\ntimeDelay: {4}\nupdateNumber: {5}\ntimeStep: {6}\nmaxDistance: {7}\n}}"\

@@ -11,7 +11,7 @@ Every time a body is created, the max_id values increases.
 #import colour
 
 from modules import body
-from modules import vector
+from modules import vector, metrics
 from modules import constants
 from modules import colour
 
@@ -31,6 +31,8 @@ class Universe:
         self.max_speed = -1
         self.relativistic = False
     
+        self._nlaw = 2
+        self._nmetric = 2
     
     def __repr__(self):
         body_str = ""
@@ -88,7 +90,7 @@ class Universe:
         if mass == 0:
             return weighted_centre
         else:
-            return weighted_centre * (1/mass)
+            return weighted_centre /mass
         
 
 
@@ -96,7 +98,7 @@ class Universe:
 
     #####  FIELDS - for each body object.
 
-    def net_gravity_field(self, body_id, X:vector.Vector):
+    def net_gravity_field(self, body_id, X:vector.Vector, dist_error):
         """
         Calculate the gravitational field at the location of the body.
         :input: id number for body
@@ -119,13 +121,13 @@ class Universe:
                     if other_body.id == body_id:
                         pass # dont compute field between self
                     else:
-                        tmp_field = other_body.gravity_field(X)
+                        tmp_field = other_body.gravity_field(X, dist_error, (self._nlaw, self._nmetric))
                         field = tmp_field + field
                 i += 1
         return field
 
 
-    def net_electric_field(self, body_id, X:vector.Vector):
+    def net_electric_field(self, body_id, X:vector.Vector, dist_error):
         """
         Calculate the electric field at the location of the body.
         :input: id number for body
@@ -148,7 +150,7 @@ class Universe:
                     if other_body.id == body_id:
                         pass # dont compute field between self
                     else:
-                        tmp_field = other_body.electric_field(X)
+                        tmp_field = other_body.electric_field(X, dist_error, (self._nlaw, self._nmetric))
                         field = tmp_field + field
                 i += 1
         return field
@@ -157,7 +159,7 @@ class Universe:
 
     #####  FORCES
 
-    def net_gravity_force(self, body_id:int, X:vector.Vector):
+    def net_gravity_force(self, body_id:int, X:vector.Vector, dist_error):
         """
         Given a body, calculate the net gravity field
         """
@@ -165,10 +167,10 @@ class Universe:
         if bod == None:
             raise TypeError("Error: Cannot compute gravity force for None Object.")
 
-        return bod.mass * self.net_gravity_field(body_id, X)
+        return bod.mass * self.net_gravity_field(body_id, X, dist_error)
 
 
-    def net_electric_force(self, body_id:int, X:vector.Vector):
+    def net_electric_force(self, body_id:int, X:vector.Vector, dist_error):
         """
         Given a body, calculate the net electric field
         """
@@ -176,31 +178,31 @@ class Universe:
         if bod == None:
             raise TypeError("Error: Cannot compute gravity force for None Object.")
                         
-        return bod.charge * self.net_electric_field(body_id, X)
+        return bod.charge * self.net_electric_field(body_id, X, dist_error)
 
 
 
-    def net_force(self, body_id, X:vector.Vector, V:vector.Vector):
+    def net_force(self, body_id, X:vector.Vector, V:vector.Vector, dist_error):
         """
         Given a body, find the total force it experiences.
         """
         bod = self.get_body(body_id)
-        F = self.net_gravity_force(body_id, X) + self.net_electric_force(body_id, X)
+        F = self.net_gravity_force(body_id, X, dist_error) + self.net_electric_force(body_id, X, dist_error)
 
         if self.resistance:
-            F = F + bod.resistance_force(V)
+            F = F + bod.resistance_force(V, (self._nlaw, self._nmetric))
         return F
 
 
 
-    def net_acceleration(self, obj:body.Body, X:vector.Vector, V:vector.Vector):
+    def net_acceleration(self, obj:body.Body, X:vector.Vector, V:vector.Vector, dist_error):
         if obj.mass == 0:
             return vector.Vector.zero_vector(len(self.centre))
         else:
             V = self.correct_velocity(V)
             
             # NON-RELATIVISTIC FORCES
-            F = self.net_force(obj.id, X, V)
+            F = self.net_force(obj.id, X, V, dist_error)
 
             if self.relativistic:
                 return self.relativistic_acceleration(obj.mass, V, F)
@@ -209,7 +211,7 @@ class Universe:
 
 
 
-    def runge_kutta_method(self, obj:body.Body, t:float):
+    def runge_kutta_method(self, obj:body.Body, t:float, dist_error:float):
         """
         Update the position and velocity of the object.
             
@@ -235,16 +237,16 @@ class Universe:
         #force = self.net_force(obj.id, obj.X, obj.V)
         #print("Inital Force:",force, obj.name)
 
-        kv1 = self.net_acceleration(obj, obj.X, obj.V)
+        kv1 = self.net_acceleration(obj, obj.X, obj.V, dist_error)
         kx1 = obj.V
 
-        kv2 = self.net_acceleration(obj, obj.X + kx1*(t/2), obj.V + kv1*(t/2))
+        kv2 = self.net_acceleration(obj, obj.X + kx1*(t/2), obj.V + kv1*(t/2), dist_error)
         kx2 = obj.V + (t/2) * kv1
 
-        kv3 = self.net_acceleration(obj, obj.X + kx2*(t/2), obj.V + kv2*(t/2))
+        kv3 = self.net_acceleration(obj, obj.X + kx2*(t/2), obj.V + kv2*(t/2), dist_error)
         kx3 = obj.V + (t/2) * kv2
 
-        kv4 = self.net_acceleration(obj, obj.X + kx3*t, obj.V + kv3*t)
+        kv4 = self.net_acceleration(obj, obj.X + kx3*t, obj.V + kv3*t, dist_error)
         kx4 = obj.V + kv3*t
 
         #new_v = obj.V + (t/6) * (kv1 + 2*kv2 + 2*kv3 + kv4)
@@ -271,7 +273,7 @@ class Universe:
 
 
 
-    def update_all_bodies(self, t:float):
+    def update_all_bodies(self, t:float, dist_error:float):
         """
         Use numeric methods to update the velocities and positions of ALL of the Body objects.
         """
@@ -285,7 +287,7 @@ class Universe:
                 # update only if non-anchor:
                 if not bod.anchor:
                     # Apply numeric method
-                    self.runge_kutta_method(bod, t)
+                    self.runge_kutta_method(bod, t, dist_error)
                 
                     if self.conserve_energy:
                         """
@@ -305,7 +307,11 @@ class Universe:
         # SOURCE OF POTENTIAL ERRORS: del_x may not correct in runge-kutta method.
         c = self.max_speed
         if self.max_speed >= 0:
-            v = V.norm()
+            v = 0
+            if self._nmetric == 2:
+                v = V.norm()
+            else:
+                v = metrics.metric_norm(V,self._nmetric)
             if v > c:
                 V = V * (c/v)
         return V
@@ -327,7 +333,12 @@ class Universe:
         elif self.max_speed == 0:
             raise ValueError("\nCannot find lorentz factor for universe with Speed Limit of 0.")
         else:
-            v_sqr = vector.Vector.inner_product(v,v)
+            v_sqr = 0
+            if self._nmetric == 2:
+                v_sqr = vector.Vector.inner_product(v,v)
+            else:
+                v_sqr = metrics.metric_norm(v,self._nmetric) ** 2
+            
             c_sqr = self.max_speed * self.max_speed
             if v_sqr > c_sqr:
                 raise ValueError("\nVelocity faster than the Universal Speed limit.\n  Vector: {0}\n  Object Speed: {1}\n  Max Speed: {2}"\
@@ -345,7 +356,11 @@ class Universe:
         # SPECIAL RELATIVISTIC CALCULATIONS
         if self.max_speed > 0:
             mass = self.lorentz_factor(V) * mass
-            force = force - vector.Vector.inner_product(V,force)*V / (self.max_speed * self.max_speed)
+            c_sqr = self.max_speed * self.max_speed
+            
+            if self._metric != 2 and not constants.WARNING:
+                print("Warning: Inner product is ill defined for other non-euclidean metrics.")
+            force = force - vector.Vector.inner_product(V,force)*V / (c_sqr)
         return force/mass
 
 
@@ -354,7 +369,11 @@ class Universe:
         c = self.max_speed
         if (c > 0 and self.relativistic) or (c >= 0 and not self.relativistic):
             for bod in self.bodies:
-                v = bod.V.norm()
+                v = 0
+                if self._nmetric == 2:
+                    v = bod.V.norm()
+                else:
+                    v = metrics.metric_norm(V,self._nmetric)
 
                 if v > c:
                     name = ""

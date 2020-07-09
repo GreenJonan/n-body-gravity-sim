@@ -30,6 +30,9 @@ energy_consv_str = "conserveEnergy"
 max_v_str = "maxSpeed"
 relat_str = "relativistic"
 
+nlaw_str = "__nLaw"
+nmetric_str = "__nMetric"
+
 
 # body
 x_str = "X"
@@ -230,6 +233,7 @@ def parse_constants(string:str, parent_name:str, variables:dict):
             tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 consts.max_dist = tmp
+                    
 
         else:
             raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'"\
@@ -277,7 +281,9 @@ def parse_universe(string:str, children_obj, parent_name:str, variables:dict):
     
     max_speed = -1
     relativistic = False
-
+    
+    nlaw = 2
+    nmetric = 2
 
     for pair in key_values:
         keyword = pair[0]
@@ -299,11 +305,23 @@ def parse_universe(string:str, children_obj, parent_name:str, variables:dict):
             energy_consv = get_bool(value, my_name)
 
         elif keyword == max_v_str:
-            max_speed = parse.parse_maths_string(value, my_name, variables)
+            tmp = parse.parse_maths_string(value, my_name, variables)
+            if tmp != None:
+                max_speed = tmp
         elif keyword == relat_str:
             relativistic = True
             if value != "":
                 relativistic = get_bool(value, my_name)
+        
+        elif keyword == nlaw_str:
+            tmp = parse.parse_maths_string(value, my_name, variables)
+            if tmp != None:
+                nlaw = tmp
+        elif keyword == nmetric_str:
+            tmp = parse.parse_maths_string(value, my_name, variables)
+            if tmp != None:
+                nmetric = tmp
+
         else:
             raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'"\
                            .format(parent_name, keyword))
@@ -317,6 +335,9 @@ def parse_universe(string:str, children_obj, parent_name:str, variables:dict):
 
     uni.relativistic = relativistic
     uni.max_speed = max_speed
+
+    uni._nlaw = nlaw
+    uni._nmetric = nmetric
     return uni
 
 
