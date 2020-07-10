@@ -20,6 +20,7 @@ update_num_str = "updateNumber"
 time_step_str = "timeStep"
 max_dist_str = "maxDistance"
 
+warning_str = "WARNING"
 
 # universe
 dim_str = "dimension"
@@ -29,6 +30,8 @@ energy_consv_str = "conserveEnergy"
 
 max_v_str = "maxSpeed"
 relat_str = "relativistic"
+
+trail_str = "trailHistory"
 
 nlaw_str = "__nLaw"
 nmetric_str = "__nMetric"
@@ -42,6 +45,11 @@ q_str = "charge"
 r_str = "radius"
 name_str = "name"
 anch_str = "anchor"
+
+skip_str = "trailSkip"
+max_trail_str = "maxTrail"
+trail_col_str = "trailColour"
+
 
 vect_str = "vector"
 polar_str = "polar"
@@ -319,7 +327,13 @@ def parse_constants(strings:list, parent_name:str, variables:dict):
             tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 consts.max_dist = tmp
-                    
+
+        elif name == warning_str:
+            if value != "":
+                b = get_bool(value, my_name)
+                consts.warning = b
+                consts.warning_possible = b
+    
 
         else:
             raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'"\
@@ -372,6 +386,8 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
     max_speed = -1
     relativistic = False
     
+    disp_trail = False
+    
     nlaw = 2
     nmetric = 2
 
@@ -403,6 +419,11 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
             if value != "":
                 relativistic = get_bool(value, my_name)
         
+        elif keyword == trail_str:
+            disp_trail = True
+            if value != "":
+                disp_trail = get_bool(value, my_name)
+    
         elif keyword == nlaw_str:
             tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
@@ -425,6 +446,8 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
 
     uni.relativistic = relativistic
     uni.max_speed = max_speed
+
+    uni.display_trails = disp_trail
 
     uni._nlaw = nlaw
     uni._nmetric = nmetric
@@ -456,6 +479,10 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
     radius = 0
     col = colour.black
     name = ""
+    
+    trail_col = colour.white
+    max_trail = 0
+    skip_num = 0
     
     anchor = False
     
@@ -497,6 +524,18 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
             anchor = True
             if value != "":
                 anchor = get_bool(value, parent_name)
+        
+        elif keyword == trail_col_str:
+            trail_col = get_colour_key_value(value, child_obj, key_name)
+        elif keyword == skip_str:
+            tmp = parse.parse_maths_string(value, key_name, variables)
+            if tmp != None:
+                skip_num = int(tmp)
+        elif keyword == max_trail_str:
+            tmp = parse.parse_maths_string(value, key_name, variables)
+            if tmp != None:
+                max_trail = int(tmp)
+    
         else:
             raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'"\
                            .format(parent_name, keyword))
@@ -515,6 +554,12 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
     # final adjustments
     if anchor:
         b.toggle_anchor()
+
+    b.trail_history.max_num = max_trail
+    b.trail_history.colour = trail_col
+    b.trail_history.skip_num = skip_num
+
+    #print(b.trail_history, name, b.trail_history.max_num)
     return b
 
 

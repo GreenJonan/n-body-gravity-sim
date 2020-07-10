@@ -265,11 +265,13 @@ class UniverseScreen:
         x,y=0,0
         width,height = self.dims
 
-        x = self.get_pixel(X.components[self.proj[0]] - self.centre[0])
-        y = self.get_pixel(X.components[self.proj[1]] - self.centre[1])
+        #x = self.get_x_pix(X)
+        #y = self.get_y_pix(X)
         r = math.ceil(body.radius / self.scale)
 
-        x_px,y_px = (x + self.screen_centre[0], -y + self.screen_centre[1])
+        #x_px,y_px = (x + self.screen_centre[0], -y + self.screen_centre[1])
+        x_px = self.get_x_pix(X)
+        y_px = self.get_y_pix(X)
 
         # now compute bounding box:
         R = r-1
@@ -279,8 +281,14 @@ class UniverseScreen:
         x_min = x_px - R; x_max = x_px + R
         y_min = y_px - R; y_max = y_px + R
         
-        y_in_range = 0 <= y_px < height or 0 <= y_min < height or 0 <= y_max < height
-        x_in_range = 0 <= x_px < width or 0 <= x_min < width or 0 <= x_max < width
+        
+        #y_in_range = 0 <= y_px < height or 0 <= y_min < height or 0 <= y_max < height
+        #x_in_range = 0 <= x_px < width or 0 <= x_min < width or 0 <= x_max < width
+
+        y_in_range = self.point_in_range(0,height, y_px) or self.point_in_range(0,height, y_min)\
+            or self.point_in_range(0,height, y_max)
+        x_in_range = self.point_in_range(0,width, x_px) or self.point_in_range(0,width, x_min)\
+            or self.point_in_range(0,width, x_max)
 
         if x_in_range and y_in_range:
             if r > int_max:
@@ -295,6 +303,37 @@ class UniverseScreen:
 
 
 
+    @staticmethod
+    def point_in_range(min,max, val):
+        return min <= val < max
+    
+    def get_x_pix(self, X):
+        tmp_x = self.get_pixel(X.components[self.proj[0]] - self.centre[0])
+        return tmp_x + self.screen_centre[0]
+    def get_y_pix(self, X):
+        tmp_y = self.get_pixel(X.components[self.proj[1]] - self.centre[1])
+        return -tmp_y + self.screen_centre[1]
+    
+    
+    ####################################
+    # used to draw trails for objects
+    # assume the vector is relative to the position of the object required.
+    # move it relative to the current position of the vector
+    # then centre it relative to the current position of the object
+    # then centre it relative to the centre of the screen such that the object is at the centre.
+    
+    
+    def get_x_pix_offset(self,X,Y):
+        tmp_x = X.components[self.proj[0]] + Y.components[self.proj[0]]
+        tmp_x = tmp_x - self.centre[0] # centre at current position of object.
+        tmp_x = self.get_pixel(tmp_x)
+        return tmp_x + self.screen_centre[0]
+    
+    def get_y_pix_offset(self, X,Y):
+        tmp_y = X.components[self.proj[1]] + Y.components[self.proj[1]]
+        tmp_y = tmp_y - self.centre[1] # centre at current position of object.
+        tmp_y = self.get_pixel(tmp_y)
+        return -tmp_y + self.screen_centre[1]
 
 
     #####  UNIVERSE
@@ -307,10 +346,76 @@ class UniverseScreen:
         
         self.screen.fill(self.colour)
         
+        self.draw_trails(U)
+        
         for body in U.bodies:
             if isinstance(body, b.Body):
                 self.draw_2dprojection_body(body)
 
+
+
+
+    #####  Trails
+
+    def draw_trails(self, U:u.Universe):
+        """
+        Draw object path centre trails.
+        """
+        if U.display_trails:
+        
+            centre = U.centre
+            if U.trail_id == 0:
+                centre = U.get_centre_of_mass()
+            elif U.trail_id > 0:
+                tmp_bod = U.get_body(U.trail_id)
+                if tmp_bod != None:
+                    centre = tmp_bod.X
+            
+            
+            for bod in U.bodies:
+                
+                tmp_trail = bod.trail_history
+                trails = tmp_trail.get_history()
+                
+                colour = tmp_trail.colour
+
+                i = 0
+                n = len(trails)
+                if n > 1:
+                    old = trails[i]
+                    if old == None:
+                        raise TypeError("\nCannot Draw lines with None-type object.\n  '{0}'"\
+                                        .format(trails))
+                    
+                    
+                    old_x = self.get_x_pix_offset(old, centre)
+                    old_y = self.get_y_pix_offset(old, centre)
+                    
+                    w = self.dims[0]
+                    h = self.dims[1]
+                    old_range = self.point_in_range(0, w, old_x) and self.point_in_range(0,h,old_y)
+                    i += 1
+    
+                    while i < n:
+                        #print(bod.name, old_x, old_y)
+                        new = trails[i]
+                        
+                        if new == None:
+                            raise TypeError("\nCannot Draw lines with None-type object.\n  '{0}'"\
+                                            .format(trails))
+                    
+                        nx = self.get_x_pix_offset(new, centre)
+                        ny = self.get_y_pix_offset(new, centre)
+                        new_range = self.point_in_range(0, w, nx) and self.point_in_range(0,h,ny)
+                        #print(new_range, (old_x,old_y),(nx,ny), bod.name)
+                    
+                        if old_range and new_range:
+                            #print("DRAWING", (old_x,old_y),(nx,ny))
+                            pygame.draw.line(self.screen, colour, (old_x,old_y),(nx,ny), 1)
+                        i += 1
+
+                        old_x,old_y = nx, ny
+                        old_range = new_range
 
 
 

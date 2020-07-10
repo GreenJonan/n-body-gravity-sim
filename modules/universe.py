@@ -26,6 +26,9 @@ class Universe:
         self.max_id = len(bodies)
         self.centre = centre
         self.conserve_energy = False
+        
+        self.display_trails = False
+        self.trail_id = -1
     
         # not implemented
         self.max_speed = -1
@@ -195,23 +198,24 @@ class Universe:
 
 
 
-    def net_acceleration(self, obj:body.Body, X:vector.Vector, V:vector.Vector, dist_error):
+    def net_acceleration(self, obj:body.Body, X:vector.Vector, V:vector.Vector, dist_error, warning):
         if obj.mass == 0:
             return vector.Vector.zero_vector(len(self.centre))
         else:
-            V = self.correct_velocity(V)
+            V = self.correct_velocity(V, warning)
+            #print(V.norm(), self.max_speed)
             
             # NON-RELATIVISTIC FORCES
             F = self.net_force(obj.id, X, V, dist_error)
 
             if self.relativistic:
-                return self.relativistic_acceleration(obj.mass, V, F)
+                return self.relativistic_acceleration(obj.mass, V, F, warning)
             else:
                 return F * ( 1 / obj.mass)
 
 
 
-    def runge_kutta_method(self, obj:body.Body, t:float, dist_error:float):
+    def runge_kutta_method(self, obj:body.Body, t:float, dist_error:float, warning:bool):
         """
         Update the position and velocity of the object.
             
@@ -237,16 +241,16 @@ class Universe:
         #force = self.net_force(obj.id, obj.X, obj.V)
         #print("Inital Force:",force, obj.name)
 
-        kv1 = self.net_acceleration(obj, obj.X, obj.V, dist_error)
+        kv1 = self.net_acceleration(obj, obj.X, obj.V, dist_error, warning)
         kx1 = obj.V
 
-        kv2 = self.net_acceleration(obj, obj.X + kx1*(t/2), obj.V + kv1*(t/2), dist_error)
+        kv2 = self.net_acceleration(obj, obj.X + kx1*(t/2), obj.V + kv1*(t/2), dist_error, warning)
         kx2 = obj.V + (t/2) * kv1
 
-        kv3 = self.net_acceleration(obj, obj.X + kx2*(t/2), obj.V + kv2*(t/2), dist_error)
+        kv3 = self.net_acceleration(obj, obj.X + kx2*(t/2), obj.V + kv2*(t/2), dist_error, warning)
         kx3 = obj.V + (t/2) * kv2
 
-        kv4 = self.net_acceleration(obj, obj.X + kx3*t, obj.V + kv3*t, dist_error)
+        kv4 = self.net_acceleration(obj, obj.X + kx3*t, obj.V + kv3*t, dist_error, warning)
         kx4 = obj.V + kv3*t
 
         #new_v = obj.V + (t/6) * (kv1 + 2*kv2 + 2*kv3 + kv4)
@@ -257,7 +261,7 @@ class Universe:
         
         new_v = obj.V + del_v
         new_x = obj.X + del_x
-        new_v = self.correct_velocity(new_v)
+        new_v = self.correct_velocity(new_v, warning)
 
         # Update Position and Velocity Vectors
         obj.X_prev = obj.X
@@ -273,7 +277,7 @@ class Universe:
 
 
 
-    def update_all_bodies(self, t:float, dist_error:float):
+    def update_all_bodies(self, t:float, dist_error:float, warning:bool):
         """
         Use numeric methods to update the velocities and positions of ALL of the Body objects.
         """
@@ -287,7 +291,14 @@ class Universe:
                 # update only if non-anchor:
                 if not bod.anchor:
                     # Apply numeric method
-                    self.runge_kutta_method(bod, t, dist_error)
+                    self.runge_kutta_method(bod, t, dist_error, warning)
+                    
+                    """
+                    if self.display_trails:
+                        trail = bod.trail_history
+                        #X = bod.X - self.trail_centre  #looks so bad not even funny
+                        trail.add_history(bod.X)
+                    """
                 
                     if self.conserve_energy:
                         """
@@ -296,14 +307,59 @@ class Universe:
                         """
                         NotImplemented
             i += 1
+        if self.display_trails:
+            self.add_trails()
         return None
+    
+    
+    def clear_trails(self):
+        for bod in self.bodies:
+            if isinstance(bod, body.Body):
+
+                t = bod.trail_history
+                t.num = 0
+                t.head = None
+                t.tail = None
+        return
+
+
+    def update_trail_track(self, track_id):
+        self.trail_id = track_id
+        return self.add_trails()
+
+
+    def add_trails(self):
+        #input()
+        """
+        Add trails, with track_id
+        """
+        id = self.trail_id
+        
+        trail_centre = self.centre
+        if id == 0:
+            trail_centre = self.get_centre_of_mass()
+        elif id > 0:
+            tmp_bod = self.get_body(id)
+            if tmp_bod != None:
+                trail_centre = tmp_bod.X
+    
+        for bod in self.bodies:
+            if isinstance(bod, body.Body):
+                
+                t = bod.trail_history
+                X = bod.X - trail_centre
+                t.add_history(X)
+                #print(X, bod.X, trail_centre, bod.name)
+                #print(bod.name)
+                #print()
+        return
 
 
 
 
     # speed limit
     
-    def correct_velocity(self, V):
+    def correct_velocity(self, V, warning):
         # SOURCE OF POTENTIAL ERRORS: del_x may not correct in runge-kutta method.
         c = self.max_speed
         if self.max_speed >= 0:
@@ -313,7 +369,15 @@ class Universe:
             else:
                 v = metrics.metric_norm(V,self._nmetric)
             if v > c:
-                V = V * (c/v)
+                c_v = (c/v)
+                if c_v * v > 1.0:
+                    if warning:
+                        print("WARNING: adjusted speed limit is still faster than light\n v={0}\n c={1}"
+                              .format(v,c))
+                    c_v = 0.99999999*c_v
+                
+                V = V * c_v
+    
         return V
 
 
@@ -348,7 +412,7 @@ class Universe:
             return 1 / math.sqrt(1 - v_sqr/c_sqr)
 
 
-    def relativistic_acceleration(self, mass, V, force):
+    def relativistic_acceleration(self, mass, V, force, warning):
         """
         See here for more information about relativistic forces:
         https://en.wikipedia.org/wiki/Relativistic_mechanics#Force
@@ -358,7 +422,7 @@ class Universe:
             mass = self.lorentz_factor(V) * mass
             c_sqr = self.max_speed * self.max_speed
             
-            if self._nmetric != 2 and not constants.WARNING:
+            if self._nmetric != 2 and not warning:
                 print("Warning: Inner product is ill defined for other non-euclidean metrics.")
             force = force - vector.Vector.inner_product(V,force)*V / (c_sqr)
         return force/mass

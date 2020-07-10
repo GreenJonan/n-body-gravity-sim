@@ -189,6 +189,9 @@ screen.update_projection(universe, projection=(0,1))
 screen.update_tracking(universe)
 
 
+if universe.display_trails:
+    universe.update_trail_track(screen.track_id)
+
 
 #####
 #####   Main run loop
@@ -234,8 +237,19 @@ while run:
                     screen.scale = screen.default_scale
 
                 elif event.key == pygame.K_z:
-                    
                     screen.show_zoom = not screen.show_zoom
+
+                elif event.key == pygame.K_w:
+                    if constants.warning_possible:
+                        constants.warning = not constants.warning
+                            
+                elif event.key == pygame.K_t:
+                    universe.display_trails = not universe.display_trails
+                        
+                    if universe.display_trails:
+                        universe.update_trail_track(screen.track_id)
+                    else:
+                        universe.clear_trails()
 
     ###  draw functions
 
@@ -252,7 +266,7 @@ while run:
         i = 0
         while i < constants.update_number:
             universe.update_all_bodies(constants.time_step / constants.update_number,
-                                       constants.distance_error)
+                                       constants.distance_error, constants.warning)
             
             """
             pass_start = earth.X.components[1] >= 0 >= earth.X_prev.components[1]\

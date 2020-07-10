@@ -45,8 +45,9 @@ class Body:
         self.id = id
         self.colour = colour
         
+        self.trail_history = TrailHistory()
+        
         self.anchor = False
-
         self.name = name
 
 
@@ -142,6 +143,104 @@ class Body:
 
 
 
+
+
+######    Object trails
+######
+
+
+class TrailHistory:
+    """
+    Variation of a Queue, queue on the head and dequeue off the tail.
+    """
+    def __init__(self):
+        self.head = None
+        self.tail = None
+        self.skip_num = 0
+        self.max_num = 0
+        self.num = 0
+        self.colour = colour.white
+
+    def add_new_history(self, x:vector.Vector):
+        new_node = Node(x)
+        if self.head == None:
+            self.tail = new_node
+        else:
+            self.head.next = new_node
+        self.head = new_node
+        self.num += 1
+
+    def add_history(self, x:vector.Vector):
+        #print("there")
+        if self.max_num != 0:
+            self.add_new_history(x)
+            #print("here")
+            if self.max_num > 0 and self.num > self.max_num:
+                self.pop_history()
+
+    def pop_history(self):
+        if self.head == None:
+            return None
+        else:
+            p = self.tail
+            if self.head == self.tail:
+                self.head = None
+            self.tail = p.next
+            self.num -= 1
+            return p.value
+
+    def get_history(self):
+        #input()
+        length = self.num
+        N = length
+        
+        n = self.skip_num + 1
+        if n > 0:
+            N = math.ceil(N / n)
+        points = [None] * N
+
+        p = self.tail
+        
+        #print("N",N, "n", n)
+        n = 0
+
+        i = 0
+        while i < N and p != None:
+            if n <= 0:
+                n = self.skip_num
+                points[i] = p.value
+                i += 1
+            else:
+                n -= 1
+            #print("here")
+            #print(p.value)
+            p = p.next
+    
+        #print(self)
+        #print(points)
+        return points
+
+
+
+    def __repr__(self):
+        string = ""
+        if self.tail == None:
+            pass
+        else:
+            p = self.tail
+            string += str(p.value)
+            p = p.next
+            while p != None:
+                string += ", " +str(p.value)
+                p = p.next
+        return string
+
+
+
+class Node:
+    def __init__(self, val):
+        self.value = val
+        self.next = None
 
 if __name__ == "__main__":
     pass

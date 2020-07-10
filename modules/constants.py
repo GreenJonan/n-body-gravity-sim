@@ -3,7 +3,7 @@ This module is just contains various constants
 """
 import math
 
-WARNING = False
+WARNING = True
 
 
 pi = math.pi
@@ -65,6 +65,9 @@ class Constants:
         self.time_step = t_step
 
         self.max_dist = m_dist
+    
+        self.warning = False
+        self.warning_possible = WARNING
     
 
     def __repr__(self):
