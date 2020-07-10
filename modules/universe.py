@@ -358,7 +358,7 @@ class Universe:
             mass = self.lorentz_factor(V) * mass
             c_sqr = self.max_speed * self.max_speed
             
-            if self._metric != 2 and not constants.WARNING:
+            if self._nmetric != 2 and not constants.WARNING:
                 print("Warning: Inner product is ill defined for other non-euclidean metrics.")
             force = force - vector.Vector.inner_product(V,force)*V / (c_sqr)
         return force/mass
