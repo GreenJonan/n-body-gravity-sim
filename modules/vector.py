@@ -166,16 +166,17 @@ class Vector:
     
         i = 0
         while i < dims-1:
-            t = abs(angles[i])  #warning may be non float/int
+            t = angles[i]  #warning may be non float/int
             if i+1 == dims-1:
                 # this is necessary, so that the last angle corresponds to the second last component
-                t = t % (2*math.pi)
+                t = get_pseudo_mod(t, 2*math.pi)
             else:
-                t = t % math.pi
+                t = get_pseudo_mod(t,math.pi)
             vecs[i] = radius * sin_t * math.cos(t)
             sin_t = sin_t * math.sin(t)
             i += 1
         vecs[i] = radius * sin_t
+        #print(radius, angles, vecs)
         return Vector(vecs)
     
 
@@ -234,7 +235,13 @@ class Vector:
 
 
 
-
+def get_pseudo_mod(x,y):
+    # get x % y.
+    while x > y:
+        x -= y
+    while x < 0:
+        x += y
+    return x
 
 
 
