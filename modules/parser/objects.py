@@ -114,13 +114,53 @@ def parse_forloop(strings:list, parent_name:str, children, variables:dict):
 
 
     # format parsing
-    start_str = ""
-    loop_str = ""
-    end_str = ""
+    parts = args.split(";")
+    if len(parts) != 3:
+        raise SyntaxError("\nStack Trace: {0}\Invalid number of parameters in for loop, require three.\n '{1}'"\
+                            .format(parent_name, args))
 
-    print(string)
-    print(args)
-    print(children)
+    start_str = parts[0]
+    end_str = parts[1]
+    loop_str = parts[2]
+
+    """
+    i = 0 #start
+    while i < N: #end
+        i += 1 #loop
+    """
+
+    start_pairs_full = parse.parse_key_values(start_str, parent_name, sep="=", num=1)
+    loop_pairs_full = parse.parse_key_values(loop_str, parent_name, sep="=", num=1)
+
+    start_pairs = start_pairs_full[0]
+    loop_pairs = loop_pairs_full[0]
+
+    i = start_pairs[0]
+    j = loop_pairs[0]
+
+    if len(start_pairs) > 1:
+        variables[i] = parse.parse_maths_string(start_pairs[1], parent_name, variables)
+
+    cont = True
+    while cont:
+        check = parse.parse_maths_string(end_str, parent_name, variables)
+        
+        if not check:
+            cont = False
+        else:
+            # MAIN BODY
+            for child in children:
+                result = child.objectify(variables, parent_name)
+                output.append(result[0])
+
+            # end main body
+
+            if len(loop_pairs) > 1:
+                variables[j] = parse.parse_maths_string(loop_pairs[1], parent_name, variables)
+
+
+    #print(output)
+    return output
 
 
 

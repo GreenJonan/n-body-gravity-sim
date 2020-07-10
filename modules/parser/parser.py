@@ -93,11 +93,23 @@ class ParseTree:
         i = 0
         while i < N:
             tmp_ls = self.children[i].objectify(variables, parent_name)
+            """
             if len(tmp_ls) > 1:
                 # there is no reason the lists shouldn't be length 1
                 raise ValueError("\nStack Trace: {0}\nIncorrectly objectified child objects. '{1}'"\
                                  .format(parent_name, tmp_ls))
             
+            ls[i] = tmp_ls[0]
+            """
+            n = len(tmp_ls)
+            if n == 0:
+                raise ValueError("\nStack Trace: {0}\nIncorrectly objectified child objects. '{1}'"\
+                                 .format(parent_name, tmp_ls))
+            
+            j = 1
+            while j < n:
+                ls.append(tmp_ls[j])
+                j += 1
             ls[i] = tmp_ls[0]
             i += 1
         return ls
@@ -113,7 +125,7 @@ class ParseTree:
         name = self.name
         
         if name == for_str:
-            return [ objects.parse_forloop(self.strings, my_name, self.children, variables) ]
+            return objects.parse_forloop(self.strings, my_name, self.children, variables)
         
         
         child_objects = self.get_child_objects(my_name + ">", variables)

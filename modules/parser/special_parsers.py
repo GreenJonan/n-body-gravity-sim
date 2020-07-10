@@ -34,7 +34,7 @@ def is_white_space(c:str):
 #####   Transform keyword, value pairs into tuples.
 
 
-def parse_key_values(string:str, parent_name:str, sep=':'):
+def parse_key_values(string:str, parent_name:str, sep=':', num = -1):
     """
     Parse a:b into (a,b). Each section
     """
@@ -56,6 +56,7 @@ def parse_key_values(string:str, parent_name:str, sep=':'):
     new_word = False
     
     seen_keyword = False
+    seps = 0
     
     N = len(string)
     i = 0
@@ -142,7 +143,7 @@ def parse_key_values(string:str, parent_name:str, sep=':'):
                 i = j
         
         elif c == sep:
-            if seen_keyword:
+            if seen_keyword and num < 0:
                 ######
                 # find beggining and end part of the string
                 j = i
@@ -165,12 +166,18 @@ def parse_key_values(string:str, parent_name:str, sep=':'):
                                   .format(parent_name, string[beggining:ending]))
                 ######
                 
-            seen_keyword = True
-            name = word
-            word = ""
-            key = False
-            has_char = False
-        #new_word = True   # no need, already set 'word' to empty string
+            
+            
+            if num < 0 or (seps < num):
+                seen_keyword = True
+                name = word
+                word = ""
+                key = False
+                has_char = False
+                #new_word = True   # no need, already set 'word' to empty string
+            else:
+                word += c
+            seps += 1
         
         elif c == line_break:
             value = word
@@ -227,6 +234,10 @@ def maths_2func(c:str):
         return True
     elif c == '^':
         return True
+    elif c == '<':
+        return True
+    elif c == '>':
+        return True
     else:
         return False
 
@@ -243,6 +254,8 @@ def maths_1left_func(c:str):
         return True
     elif c == '+':
         return True
+    elif c == '~':
+        return True
     else:
         return False
 
@@ -258,6 +271,8 @@ def maths_syntax(c:str):
     if c == '(':
         return True
     elif c == ')':
+        return True
+    elif c == '=':
         return True
     elif maths_2func(c):
         return True
@@ -487,6 +502,25 @@ class MathList:
 
         # helper function
         def construct_tree_subset(pointer, end_pointer=None, parent_name:str=""):
+            
+            # subhelper function
+            def error_string(pointer, end):
+                value_str = "'"+str(pointer.value)+"'"
+                full_str = ""
+                pointer = pointer.next
+                cont = True
+                while cont:
+                    if pointer == end:
+                        value_str = full_str
+                    
+                    if pointer == None:
+                        cont = False
+                    else:
+                        full_str += " " + "'" + str(pointer.value) + "'"
+                        pointer = pointer.next
+                return value_str, full_str
+        
+            
             if pointer == None:
                 raise TypeError("Error parsing Maths String: {0}".format(parent_name))
             
@@ -531,6 +565,7 @@ class MathList:
 
             output = [None]*3
 
+            first_eq = None
             first_pow = None
             first_mult = None
             first_add = None
@@ -559,6 +594,15 @@ class MathList:
                         if first_add == None and left_elem:
                             first_add = p
                         left_elem = False
+                    
+                    elif value == '<' or value == '>' or value == '<=' or value == '>=':
+                        if first_eq == None:
+                            first_eq = p
+                        else:
+                            value_str, full_str = error_string(pointer, end_pointer)
+                            raise SyntaxError("\nStack Trace: {0}\nMultiple inequalities is unsupported.\n Section: '{1}'\n Full: '{2}'"\
+                                              .format(parent_name, value_str, full_str))
+                        left_elem = False
                             
                     else:
                         left_elem = True
@@ -567,8 +611,10 @@ class MathList:
                         
             func_p = None
             double_params = True
-
-            if first_add != None:
+            
+            if first_eq != None:
+                func_p = first_eq
+            elif first_add != None:
                 func_p = first_add
             elif first_mult != None:
                 func_p = first_mult
@@ -576,23 +622,12 @@ class MathList:
                 func_p = first_pow
             else:
                 # get string representation of values
-                tmp_p = pointer
-                value_str = "'"+str(tmp_p.value)+"'"
-                sub_str = ""
-                tmp_p = tmp_p.next
-                cont = True
-                while cont:
-                    if tmp_p == end_pointer:
-                        sub_str = value_str
-                    if tmp_p == None:
-                        cont = False
-                    else:
-                        value_str += " " + "'" + str(tmp_p.value) + "'"
-                        tmp_p = tmp_p.next
+                value_str, full_str = error_string(pointer, end_pointer)
                 
-                raise ValueError("\nStack Trace: {0}\nMultiple parameters in parse string, however no valid function.\n Values: \"{1}\"\n Subset: \"{2}\""\
-                                 .format(parent_name, value_str, sub_str))
-                
+                raise ValueError("\nStack Trace: {0}\nMultiple parameters in parse string, however no valid function.\n Section: \"{1}\"\n Full: \"{2}\""\
+                                 .format(parent_name, value_str, full_str))
+
+
             #### format tree
 
             output[0] = construct_tree_subset(pointer, func_p, parent_name)
@@ -635,23 +670,33 @@ class MathTree:
             right = str(self.right_child)
         
             if self.function == MathTree.add:
-                string = "(" + left + " + " + right + ")"
+                string = left + " + " + right
             elif self.function == MathTree.sub:
-                string = "(" + left + " - " + right + ")"
+                string = left + " - " + right
             elif self.function == MathTree.mult:
-                string = "(" + left + " * " + right + ")"
+                string = left + " * " + right
             elif self.function == MathTree.div:
-                string = "(" + left + " / " + right + ")"
+                string = left + " / " + right + ")"
             elif self.function == MathTree.pow:
-                string = "(" + left + " ^ " + right + ")"
+                string = left + " ^ " + right + ")"
             elif self.function == MathTree.identity:
-                string = "(+" + left + ")"
+                string = "+" + left
             elif self.function == MathTree.negate:
-                string = "(-" + left + ")"
+                string = "-" + left
             elif self.function == MathTree.factorial:
                 string = left + "!"
-    
-        return string
+            elif self.function == MathTree._not:
+                string = "~" + left
+            elif self.function == MathTree.lesser:
+                string = left + " < " + right
+            elif self.function == MathTree.greater:
+                string = left + ">" + right
+            elif self.function == MathTree.leq:
+                string = left + "<=" + right
+            elif self.function == MathTree.geq:
+                string = left + ">=" + right
+
+        return "(" + string + ")"
     
     @staticmethod
     def add(x,y):
@@ -683,6 +728,27 @@ class MathTree:
             result = result * x
             x -= 1
         return result
+    
+    @staticmethod
+    def _not(x):
+        if x == 0:
+            return 1
+        else:
+            return 0
+
+    @staticmethod
+    def leq(x,y):
+        return x <= y
+    @staticmethod
+    def geq(x,y):
+        return x >= y
+    @staticmethod
+    def greater(x,y):
+        return x > y
+    @staticmethod
+    def lesser(x,y):
+        return x < y
+
 
 
     def get_tree_value(self, parent_name:str):
@@ -796,6 +862,15 @@ class MathTree:
                     operand.function = MathTree.div
                 elif c == '^':
                     operand.function = MathTree.pow
+                elif c == '<':
+                    operand.function = MathTree.lesser
+                elif c == '>':
+                    operand.function = MathTree.greater
+                elif c == '<=':
+                    operand.function = MathTree.leq
+                elif c == '>=':
+                    operand.function = MathTree.geq
+                
                 else:
                     raise ValueError("Stack Trace: {0}\nUnknown operand '{1}'".format(parent_name, c))
                         
@@ -856,6 +931,8 @@ class MathTree:
                         operand.function = MathTree.negate
                     elif c == '!':
                         operand.function = MathTree.factorial
+                    elif c == '~':
+                        operand.function = MathTree._not
                 
                             
                     operand.left_child = leaf
