@@ -150,7 +150,7 @@ def parse_forloop(strings:list, parent_name:str, children, variables:dict):
         else:
             # MAIN BODY
             for child in children:
-                result = child.objectify(variables, parent_name)
+                result = child.objectify(variables, parent_name + ">")
                 output.append(result[0])
 
             # end main body

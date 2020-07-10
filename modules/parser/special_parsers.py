@@ -806,7 +806,7 @@ class MathTree:
             except KeyError:
                 err = True
         if err:
-            tmp_str = "Cannot connvert non-numeric string '{1}' into float expression."
+            tmp_str = "Variable '{1}' is not initialised."
             tmp_str1 = "\nStack Trace: {0}\n" + tmp_str
             raise NameError(tmp_str1.format(parent_name, string))
             
