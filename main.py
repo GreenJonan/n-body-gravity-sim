@@ -49,6 +49,7 @@ if f == None:
 
 #file_name = "new_file.txt"
 #f = open(file_name, "r")
+
 parse_tree = parser.parse_file(f, file_name)
 
 variables = parser.default_variables
@@ -58,9 +59,25 @@ objects = parse_tree.objectify(variables)
 
 constants = objects[0]
 universe = objects[1]
-universe.conform_body_speeds()
 screen = objects[2]
 
+
+
+
+if constants == None:
+    print("ERROR:\nNo Constants object given in '{0}'".format(file_name))
+    sys.exit()
+if universe == None:
+    print("ERROR:\nNo Universe object given in '{0}'".format(file_name))
+    sys.exit()
+if screen == None:
+    print("ERROR:\nNo Screen object given in '{0}'".format(file_name))
+    sys.exit()
+
+
+
+
+universe.conform_body_speeds()
 
 
 

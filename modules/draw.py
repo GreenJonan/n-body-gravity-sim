@@ -44,6 +44,11 @@ class UniverseScreen:
         self.show_zoom = False
         self.updated_default_centre = False
     
+        # update the screen to say 'loading'
+        self.write_label("Loading...", col.rgb_inverse(self.colour), True, True)
+        pygame.display.update()
+    
+    
     
     
     def __repr__(self):

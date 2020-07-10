@@ -8,6 +8,9 @@ import sys
 directory = "systems/"
 extension = ".sys"
 
+
+keyname_char = '`'
+
 """
 keywords:
     file
@@ -32,7 +35,15 @@ vect_str = "vector"
 screen_str = "screen"
 col_str = "colour"
 
+for_str = "for"  # this is a for loop
 
+
+
+def is_keyword(string:str):
+    if string == for_str:
+        return True
+    else:
+        return False
 
 
 
@@ -49,19 +60,23 @@ default_variables = {"pi":math.pi, "au":1.496e11}
 
 
 class ParseTree:
-    def __init__(self, file_name:str, string:str="", name:str=""):
+    def __init__(self, file_name:str, strings, name:str=""):
         self.children = []
-        self.string = string
+        self.strings = strings
         self.name = name
         self.parent = None
         self.fileName = file_name
     
 
-    def add_child(self, string="", name=""):
-        new_parse = ParseTree(self.fileName, string,name)
+    def add_child(self, strings, name=""):
+        new_parse = ParseTree(self.fileName, strings, name)
         new_parse.parent = self
         self.children.append(new_parse)
         return new_parse
+    
+    
+    def child_num(self):
+        return len(self.children)
 
 
     ####
@@ -95,10 +110,16 @@ class ParseTree:
         """
         
         my_name = parent_name + self.name
+        name = self.name
+        
+        if name == for_str:
+            return [ objects.parse_forloop(self.strings, my_name, self.children, variables) ]
+        
+        
         child_objects = self.get_child_objects(my_name + ">", variables)
         #print(parent_name, my_name)
-        
-        if self.name == file_str:
+
+        if name == file_str:
             # return child objects, need constants, one universe, one screen to project.
             results = [None] * 3
             i = 0
@@ -116,29 +137,29 @@ class ParseTree:
             return results
         
         
-        elif self.name == var_str:
-            return [ objects.parse_variables(self.string, my_name, variables) ]
+        elif name == var_str:
+            return [ objects.parse_variables(self.strings, my_name, variables) ]
     
-        elif self.name == uni_str:
-            return [ objects.parse_universe(self.string, child_objects, my_name, variables) ]
+        elif name == uni_str:
+            return [ objects.parse_universe(self.strings, child_objects, my_name, variables) ]
                 
-        elif self.name == body_str:
-            return [ objects.parse_body(self.string, child_objects, my_name, variables) ]
+        elif name == body_str:
+            return [ objects.parse_body(self.strings, child_objects, my_name, variables) ]
 
-        elif self.name == const_str:
-            return [objects.parse_constants(self.string, my_name, variables)]
+        elif name == const_str:
+            return [objects.parse_constants(self.strings, my_name, variables)]
             # parse constants
 
-        elif self.name == vect_str:
-            return [ objects.parse_vector(self.string, my_name, variables) ]
+        elif name == vect_str:
+            return [ objects.parse_vector(self.strings, my_name, variables) ]
 
-        elif self.name == screen_str:
-            return [ objects.parse_screen(self.string, child_objects, my_name, variables) ]
+        elif name == screen_str:
+            return [ objects.parse_screen(self.strings, child_objects, my_name, variables) ]
             # parse screen object
                 
-        elif self.name == col_str:
-            return [ objects.parse_colour(self.string, my_name, variables) ]
-                
+        elif name == col_str:
+            return [ objects.parse_colour(self.strings, my_name, variables) ]
+    
         else:
             raise TypeError("\nStack Trace: {0}\nUnknown Object type '{1}' in system file: {2}"\
                             .format(parent_name, self.name, self.fileName))
@@ -148,9 +169,19 @@ class ParseTree:
 
 
     def __repr__(self):
+        tmp_string = ""
         string = ""
-        string += self.name + ": " + self.string + '\n\n'
         
+        n = len(self.strings)
+        if n == 0:
+            pass
+        elif n == 1:
+            tmp_string = self.strings[0]
+        else:
+            tmp_string = str(self.strings)
+        
+        string += self.name + ": " + tmp_string + '\n\n'
+
         for child in self.children:
             string += str(child)
         return string
@@ -164,12 +195,11 @@ class ParseTree:
 
 
 
-
-def parse_file_section(f, parse_root:ParseTree):
+def parse_file_section(f, parse_root:ParseTree):  #object_name=""):
     """
-    If f is a file object and parse_root is a parse tree.
+    f is a file object and parse_root is a parse tree.
         
-    Open new parse tree with name {}
+    Open new parse tree with,  name {arg1}{arg2}...
     Comment out sections with []
     """
     
@@ -190,21 +220,27 @@ def parse_file_section(f, parse_root:ParseTree):
         
         return new_string
     
-    
     string = ""
     prev_word = ""
     new_word = True
     
     expect_object = False
-    parsed_num = 0
+    #parsed_num = 0
     expect_sub_object = False
+    
+    arg_search = False
+    #keywords = []
+    
+    child = None
     
     cont = True
     while cont:
+        #print("Parse:",parse_root)
+        
         c = f.read(1)
         if c == "":
             cont = False
-            raise SyntaxError("Invalid formatting of file. Require '}}' to close object type '{0}'."\
+            raise SyntaxError("\nInvalid formatting of file. Require '}}' to close object type '{0}'."\
                             .format(parse_root.name))
         else:
             # read file char
@@ -231,55 +267,90 @@ def parse_file_section(f, parse_root:ParseTree):
                 #print("Comment:", comment)
         
             else:
-                if c == '\n':
-                    c = pars.line_break
-            
-                if c == '}':
-                    cont = False
-                elif c == '{':
+                
+                if c == '{':
+                    #print("string:", string)
+                    
                     if expect_object:
-                        string += "#" + str(parsed_num)
+                        string += "#" + str(parse_root.child_num())
                         expect_object = False
+                    
+                    if not arg_search:
+                        new_strings = []
+                        child = parse_root.add_child(new_strings, name=prev_word)
+                        # the empty string is needed otherwise the function will keep adding strings to
+                        # old lists higher up in the heireichy and other places!
+                        prev_word = ""
+                    
+                    arg_search = True
                 
-                    child_parse = parse_root.add_child(name=prev_word)
-                
-                    parse_file_section(f, child_parse)
-                    prev_word = ""
-                    parsed_num += 1
-            
-                elif c == pars.line_break:
-                    string = add_word(string, prev_word)
-                    prev_word = ""
-                    string += pars.line_break
-                    expect_object = False
-            
-                elif pars.is_white_space(c):
-                    new_word = True
+                    name = prev_word
+                    parse_file_section(f, child)
 
-                elif c == ':':
-                    #add prev word to string, and set up key-value pair
-                    string = add_word(string, prev_word)
-                    string += c
+
+            
+                elif c == ' ' and arg_search:
+                    pass  #allows for separation between arguments func {} {}
                 
-                    expect_object = True
-                    prev_word = ""
-        
                 else:
-                    if new_word:
-                        # add previous word to parse string,
+                    if arg_search:
+                        # end the search for the arguments and append all objects.
+                        prev_word = ""
+                        #parsed_num += 1
+                        arg_search = False
+                        child = None
+                    
+                    else:
+                        pass #nothing to add
+                    
+                    if c == '\n':
+                        c = pars.line_break
+                
+                
+                    if c == '}':
+                        cont = False
+                
+                    elif c == pars.line_break:
                         string = add_word(string, prev_word)
                         prev_word = ""
-                        new_word = False
-                    prev_word += c
+                        string += pars.line_break
+                        expect_object = False
+            
+                    elif pars.is_white_space(c):
+                        new_word = True
+
+                    elif c == ':':
+                        #add prev word to string, and set up key-value pair
+                        string = add_word(string, prev_word)
+                        string += c
+                
+                        expect_object = True
+                        prev_word = ""
+        
+                    else:
+                        if new_word:
+                            # add previous word to parse string,
+                            string = add_word(string, prev_word)
+                            prev_word = ""
+                            new_word = False
+                        prev_word += c
+
+    if arg_search:
+        raise SyntaxError("\nNo closing brace for Object argument.\n Object: {0}\n String: {1}"\
+                          .format(parse_root.name, string))
 
 
-    if len(prev_word) > 0:
-        string = add_word(string, prev_word)
+    string = add_word(string, prev_word)
 
-    parse_root.string = string
-    #print("string:", string)
-    return
-
+    """
+    parse_root.strings.append(string)
+    print("string:", string)
+    print(parse_root.strings, parse_root.name)
+    print()
+    print()
+    """
+    parse_root.strings.append(string)
+    return parse_root
 
 
 
@@ -293,7 +364,8 @@ def parse_file(f, file_name):
     Given a file, read the contents and output the result as a ParseTree.
     """
     
-    root = ParseTree(file_name, name="root")
+    sub_strings = []
+    root = ParseTree(file_name, sub_strings, name="root")
     prev_word = ""
     new_word = True
     

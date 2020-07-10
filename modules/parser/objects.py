@@ -75,11 +75,15 @@ title_size_str = "titleSize"
 
 # variable parser
 
-def parse_variables(string:str, parent_name:str, variables:dict):
+def parse_variables(strings:list, parent_name:str, variables:dict):
     """
     Given a set of variables and values, place them into the variables dictionary.
     Variables are specified by '=' rather than ':', which indicates attributes.
     """
+    if len(strings) != 1:
+        param_error(parent_name, strings, 1)
+    string = strings[0]
+    
     key_values = parse.parse_key_values(string, parent_name, sep="=")
 
     for pair in key_values:
@@ -93,6 +97,34 @@ def parse_variables(string:str, parent_name:str, variables:dict):
 
 
 
+# for loop parser
+
+def parse_forloop(strings:list, parent_name:str, children, variables:dict):
+    """
+    Given a for loop and set of arguments, return the iterator.
+    
+    Children is a parser object.
+    """
+    if len(strings) != 2:
+        param_error(parent_name, strings, 2)
+    args = strings[0]
+    string = strings[1]
+
+    output = []
+
+
+    # format parsing
+    start_str = ""
+    loop_str = ""
+    end_str = ""
+
+    print(string)
+    print(args)
+    print(children)
+
+
+
+
 ######################
 
 ####
@@ -100,10 +132,14 @@ def parse_variables(string:str, parent_name:str, variables:dict):
 ####
 
 
-def parse_vector(string:str, parent_name:str, variables:dict):
+def parse_vector(strings:list, parent_name:str, variables:dict):
     """
     Given a string representation of a vector parse it.
     """
+    if len(strings) != 1:
+        param_error(parent_name, strings, 1)
+    string = strings[0]
+
     key_values = parse.parse_key_values(string, parent_name)
     
     if len(key_values) != 1:
@@ -146,12 +182,16 @@ def parse_vector(string:str, parent_name:str, variables:dict):
 
 
 
-def parse_colour(string:str, parent_name:str, variables:dict):
+def parse_colour(strings:list, parent_name:str, variables:dict):
     """
     Parse string representation of a colour.
         
     If No value is given, raise ValueError
     """
+    if len(strings) != 1:
+        param_error(parent_name, strings, 1)
+    string = strings[0]
+
     colours = parse.parse_key_values(string, parent_name)
     
     if len(colours) != 1:
@@ -189,7 +229,13 @@ def parse_colour(string:str, parent_name:str, variables:dict):
 
 
 
-def parse_constants(string:str, parent_name:str, variables:dict):
+def parse_constants(strings:list, parent_name:str, variables:dict):
+    
+    if len(strings) != 1:
+        param_error(parent_name, strings, 1)
+    string = strings[0]
+
+
     key_values = parse.parse_key_values(string, parent_name)
     consts = constants.Constants()
 
@@ -246,11 +292,15 @@ def parse_constants(string:str, parent_name:str, variables:dict):
 
 
 
-def parse_universe(string:str, children_obj, parent_name:str, variables:dict):
+def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
     """
     Given a string that represents a universe object, and it's children objects,
     return a universe object.
     """
+    if len(strings) != 1:
+        param_error(parent_name, strings, 1)
+    string = strings[0]
+
     key_values = parse.parse_key_values(string, parent_name)
 
     # skim bodies out from universe object.
@@ -346,11 +396,15 @@ def parse_universe(string:str, children_obj, parent_name:str, variables:dict):
 
 
 
-def parse_body(string:str, child_obj:list, parent_name:str, variables:dict):
+def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
     """
     Given a string that represents a body object, and it's children objects, 
     return a body object.
     """
+    
+    if len(strings) != 1:
+        param_error(parent_name, strings, 1)
+    string = strings[0]
     
     key_values = parse.parse_key_values(string, parent_name)
     #print("Body objects:", child_obj)
@@ -427,11 +481,16 @@ def parse_body(string:str, child_obj:list, parent_name:str, variables:dict):
 
 
 
-def parse_screen(string:str, child_obj:list, parent_name, variables:dict):
+def parse_screen(strings:list, child_obj:list, parent_name, variables:dict):
     """
     Given a string that represents a screen object, and a set of the subchildren,
     return the screen object.
     """
+    
+    if len(strings) != 1:
+        param_error(parent_name, strings, 1)
+    string = strings[0]
+
 
     key_values = parse.parse_key_values(string, parent_name)
 
@@ -512,8 +571,8 @@ def get_vector_key_value(value:str, ls:list, parent_name:str):
                               
     sub_obj = ls[pos_int]
     if not isinstance(sub_obj, vector.Vector):
-        raise TypeError("\nStack Trace: {0}\nVector subvalue is non-vector, type: '{1}'"\
-                        .format())
+        raise TypeError("\nStack Trace: {0}\nVector subvalue is non-vector, type: '{1}'\n '{2}'"\
+                        .format(parent_name, type(sub_obj), sub_obj))
     else:
         return sub_obj
 
@@ -549,3 +608,11 @@ def get_bool(value:str, parent_name):
     else:
         raise SyntaxError("\nStack Trace: {0}\nUnknowwn Boolean Type '{1}'"\
                           .format(parent_name, value))
+
+
+
+
+
+def param_error(parent_name:str, params:list, max_params):
+    raise SyntaxError("\nStack Trace: {0}\nInvalid number of variables, '{1}'\n Maximum is {2}."\
+                      .format(parent_name, params, max_params))
