@@ -15,8 +15,9 @@ from modules import vector, metrics
 from modules import constants
 from modules import colour
 from modules import collision as Collide
+from modules import utility
 
-import math,sys, random as rnd
+import math,sys
 
 
 
@@ -39,7 +40,8 @@ class Universe:
         self._nmetric = 2
     
         self.assertion = False
-    
+        self.random = False
+        self.shuffle = False
     
     def __repr__(self):
         body_str = ""
@@ -288,7 +290,7 @@ class Universe:
         if not collision:
             obj.X = new_x
         else:
-            self.multi_momentum_collision(obj, other_bodies)
+            self.multi_momentum_collision(obj, other_bodies, random=self.random)
             """
             if len(other_bodies) > 1:# and warning:
                 print("WARNING: Multiple bodies collided, untested feature.")
@@ -311,6 +313,9 @@ class Universe:
         Use numeric methods to update the velocities and positions of ALL of the Body objects.
         """
         N = len(self.bodies)
+        if self.shuffle:
+            utility.knuth_shuffle(self.bodies)
+        
         i = 0
         while i < N:
             bod = self.bodies[i]
@@ -675,10 +680,17 @@ class Universe:
         #momentum_sum = vector.Vector.zero_vector(len(self.centre))
         #results = [None] * n
         
+        index_array = None
+        if random:
+            index_array = utility.shuffle_index(n)
+        
         # find all the velocities such that not None and hence find bodies in system to compute new momentum.
         while i < n:
-            #print("here 0")
-            v0,vi = self.momentum_collision(bod, other_bodies[i])
+            j = i
+            if random:
+                j = index_array[i]
+            
+            v0,vi = self.momentum_collision(bod, other_bodies[j])
             
             if v0 != None:
                 #momentum_sum += vi*other_bodies[i].mass
@@ -686,15 +698,22 @@ class Universe:
                 #body_num += 1
                 #results[i] = (v0,vi)
                 bod.V = v0
-                other_bodies[i].V = vi
+                other_bodies[j].V = vi
             i += 1
-            
+                
+        return
         #new_momentum = self.get_momentum() - momentum_sum/body_num
         
         
         # THE CODE BELOW IS COMPLETELY PHYSICALLY WRONG!!!!!!
         # experimentally it appears that the naive method is actually the correct method
         # that is, update the velocities one by one with every object the object collides with.
+        
+        # the reason for this is the fact that conservation of momentum is equivalent to the idea that we
+        # cannot distinguish between any frame of reference.
+        # However, using the method below you can distinguish.
+        # the results for multi-collisions are likely less accurate, however, they retain this key property.
+        
         """
         i = 0
         j = 0
@@ -755,7 +774,7 @@ class Universe:
 
         #print(name0 + ".", "change in momentum:", delta.norm())
         #print()
-        return
+        #return
 
 
 

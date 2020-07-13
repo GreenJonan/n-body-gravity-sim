@@ -7,6 +7,7 @@ from modules import universe
 from modules import vector
 from modules import colour
 
+
 #keywords
 
 
@@ -21,6 +22,8 @@ time_step_str = "timeStep"
 max_dist_str = "maxDistance"
 
 warning_str = "WARNING"
+random_seed_str = "randomSeed"
+
 
 # universe
 dim_str = "dimension"
@@ -35,6 +38,10 @@ trail_str = "trailHistory"
 
 nlaw_str = "__nLaw"
 nmetric_str = "__nMetric"
+
+random_col_str = "randomCollision"
+assert_str = "assertError"
+shuffle_str = "shuffleBody"
 
 
 # body
@@ -352,6 +359,11 @@ def parse_constants(strings:list, parent_name:str, variables:dict):
                 consts.warning = b
                 consts.warning_possible = b
 
+        elif name == random_seed_str:
+            tmp = parse.parse_maths_string(value, my_name, variables)
+            if tmp != None:
+                consts.seed = tmp
+
         elif name == '':
             line_eqs = parse.parse_key_values(value, parent_name, sep="=", num=1)[0]
             # this should be length 1
@@ -424,6 +436,9 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
     relativistic = False
     
     disp_trail = False
+    assertion = False
+    random = False
+    shuffle_body = False
     
     nlaw = 2
     nmetric = 2
@@ -470,6 +485,22 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
             if tmp != None:
                 nmetric = tmp
         
+        elif keyword == assert_str:
+            assertion = True
+            if value != "":
+                assertion = get_bool(value, my_name)
+
+        elif keyword == random_col_str:
+            random = True
+            if value != "":
+                random = get_bool(value, my_name)
+
+        elif keyword == shuffle_str:
+            shuffle_body = True
+            if value != "":
+                shuffle_body = get_bool(value, my_name)
+        
+    
         elif keyword == '':
             line_eqs = parse.parse_key_values(value, parent_name, sep="=", num=1)[0]
             # this should be length 1
@@ -504,6 +535,9 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
     uni.max_speed = max_speed
 
     uni.display_trails = disp_trail
+    uni.random = random
+    uni.assertion = assertion
+    uni.shuffle = shuffle_body
 
     uni._nlaw = nlaw
     uni._nmetric = nmetric

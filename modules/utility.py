@@ -30,5 +30,5 @@ def get_range(start,stop):
 
 
 def shuffle_index(n):
-    array = get_range(0,n)
+    array = get_range(0,n-1)
     return knuth_shuffle(array)

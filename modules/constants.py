@@ -1,7 +1,7 @@
 """
 This module is just contains various constants
 """
-import math
+import math, time
 
 WARNING = True
 
@@ -68,6 +68,8 @@ class Constants:
     
         self.warning = False
         self.warning_possible = WARNING
+    
+        self.seed = time.time()
     
 
     def __repr__(self):
