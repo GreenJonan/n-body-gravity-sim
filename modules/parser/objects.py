@@ -98,20 +98,21 @@ def parse_variables(strings:list, parent_name:str, children:list, variables:dict
         param_error(parent_name, strings, 1)
     string = strings[0]
     
-    key_values = parse.parse_key_values(string, parent_name, sep="=")
-    #print(key_values)
+    key_values = parse.parse_key_values(string, parent_name, sep="=", num=1)
 
     for pair in key_values:
         name = pair[0]
         value = pair[1]
         val = None
+        
+        my_name = parent_name + ">" + name
 
         if len(value) > 0:
             if value[0] == '#':
-                val = get_subobject(value, children, parent_name, variables)
+                val = get_subobject(value, children, my_name, variables)
 
             else:
-                val = parse.parse_maths_string(value, parent_name, variables)
+                val = parse.parse_maths_string(value, my_name, variables)
         else:
             raise SyntaxError("\nStack Trace: {0}\nNo character string following equality sign."\
                               .format(parent_name))
@@ -350,7 +351,26 @@ def parse_constants(strings:list, parent_name:str, variables:dict):
                 b = get_bool(value, my_name)
                 consts.warning = b
                 consts.warning_possible = b
-    
+
+        elif name == '':
+            line_eqs = parse.parse_key_values(value, parent_name, sep="=", num=1)[0]
+            # this should be length 1
+            err = False
+            
+            if not isinstance(line_eqs, tuple):
+                err = True
+            elif line_eqs[0] == '':
+                err = True
+
+
+            if err:
+                raise SyntaxError("\nStack Trace: {0}\nNo Attribute corresponds with the string '{1}'"\
+                                  .format(parent_name, value))
+            else:
+                var = line_eqs[0]
+                val = parse.parse_maths_string(line_eqs[1], parent_name + ">" + var, variables)
+
+                variables[var] = val
 
         else:
             raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'"\
@@ -449,6 +469,25 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
             tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 nmetric = tmp
+        
+        elif keyword == '':
+            line_eqs = parse.parse_key_values(value, parent_name, sep="=", num=1)[0]
+            # this should be length 1
+            err = False
+            
+            if not isinstance(line_eqs, tuple):
+                err = True
+            elif line_eqs[0] == '':
+                err = True
+            
+            if err:
+                raise SyntaxError("\nStack Trace: {0}\nNo Attribute corresponds with the string '{1}'"\
+                                  .format(parent_name, value))
+            else:
+                var = line_eqs[0]
+                val = parse.parse_maths_string(line_eqs[1], parent_name + ">" + var, variables)
+                
+                variables[var] = val
 
         else:
             raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'"\
@@ -568,6 +607,25 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
             tmp = parse.parse_maths_string(value, key_name, variables)
             if tmp != None:
                 max_trail = int(tmp)
+        
+        elif keyword == '':
+            line_eqs = parse.parse_key_values(value, parent_name, sep="=", num=1)[0]
+            # this should be length 1
+            err = False
+            
+            if not isinstance(line_eqs, tuple):
+                err = True
+            elif line_eqs[0] == '':
+                err = True
+            
+            if err:
+                raise SyntaxError("\nStack Trace: {0}\nNo Attribute corresponds with the string '{1}'"\
+                                  .format(parent_name, value))
+            else:
+                var = line_eqs[0]
+                val = parse.parse_maths_string(line_eqs[1], parent_name + ">" + var, variables)
+                
+                variables[var] = val
     
         else:
             raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'"\
@@ -666,6 +724,25 @@ def parse_screen(strings:list, child_obj:list, parent_name, variables:dict):
             tmp = parse.parse_maths_string(value, my_name, variables)
             if tmp != None:
                 label_size = int( tmp )
+        
+        elif name == '':
+            line_eqs = parse.parse_key_values(value, parent_name, sep="=", num=1)[0]
+            # this should be length 1
+            err = False
+            
+            if not isinstance(line_eqs, tuple):
+                err = True
+            elif line_eqs[0] == '':
+                err = True
+            
+            if err:
+                raise SyntaxError("\nStack Trace: {0}\nNo Attribute corresponds with the string '{1}'"\
+                                  .format(parent_name, value))
+            else:
+                var = line_eqs[0]
+                val = parse.parse_maths_string(line_eqs[1], parent_name + ">" + var, variables)
+                
+                variables[var] = val
 
         else:
             raise NameError("\nStack Trace: {0}\nUnknown keyword '{1}'"\

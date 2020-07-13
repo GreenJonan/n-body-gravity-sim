@@ -292,7 +292,7 @@ def parse_file_section(f, parse_root:ParseTree):  #object_name=""):
                 
                 if c == '{':
                     
-                    if expect_object or is_variable_object(prev_word):
+                    if expect_object:
                         string += "#" + str(parse_root.child_num())
                         expect_object = False
                     
@@ -308,12 +308,12 @@ def parse_file_section(f, parse_root:ParseTree):  #object_name=""):
                     name = prev_word
                     parse_file_section(f, child)
 
-
             
                 elif c == ' ' and arg_search:
                     pass  #allows for separation between arguments func {} {}
                 
                 else:
+                    
                     if arg_search:
                         # end the search for the arguments and append all objects.
                         prev_word = ""
@@ -326,35 +326,36 @@ def parse_file_section(f, parse_root:ParseTree):  #object_name=""):
                     
                     if c == '\n':
                         c = pars.line_break
-                
-                
-                    if c == '}':
-                        cont = False
-                
-                    elif c == pars.line_break:
-                        string = add_word(string, prev_word)
-                        prev_word = ""
-                        string += pars.line_break
-                        expect_object = False
-            
-                    elif pars.is_white_space(c):
+
+                    if pars.is_white_space(c):
                         new_word = True
 
-                    elif c == ':':
-                        #add prev word to string, and set up key-value pair
-                        string = add_word(string, prev_word)
-                        string += c
-                
-                        expect_object = True
-                        prev_word = ""
-        
                     else:
-                        if new_word:
-                            # add previous word to parse string,
+                        if c == '}':
+                            cont = False
+                
+                        elif c == pars.line_break:
                             string = add_word(string, prev_word)
                             prev_word = ""
-                            new_word = False
-                        prev_word += c
+                            string += pars.line_break
+                            expect_object = False
+
+                        elif c == ':' or c == '=':
+                            #add prev word to string, and set up key-value pair
+                            string = add_word(string, prev_word)
+                            string += c
+                
+                            expect_object = True
+                            prev_word = ""
+
+        
+                        else:
+                            if new_word:
+                                # add previous word to parse string,
+                                string = add_word(string, prev_word)
+                                prev_word = ""
+                                new_word = False
+                            prev_word += c
 
     if arg_search:
         raise SyntaxError("\nNo closing brace for Object argument.\n Object: {0}\n String: {1}"\

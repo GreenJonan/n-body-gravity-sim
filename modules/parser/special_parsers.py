@@ -56,10 +56,11 @@ def parse_key_values(string:str, parent_name:str, sep=':', num = -1):
     new_word = False
     
     seen_keyword = False
-    seps = 0
+    total_seps = 0
     
     N = len(string)
     i = 0
+    
     
     while i <= N:
         if i == N:
@@ -143,7 +144,7 @@ def parse_key_values(string:str, parent_name:str, sep=':', num = -1):
                 i = j
         
         elif c == sep:
-            if seen_keyword and num < 0:
+            if seen_keyword and line_num < 0:
                 ######
                 # find beggining and end part of the string
                 j = i
@@ -168,7 +169,7 @@ def parse_key_values(string:str, parent_name:str, sep=':', num = -1):
                 
             
             
-            if num < 0 or (seps < num):
+            if num < 0 or (total_seps < num):
                 seen_keyword = True
                 name = word
                 word = ""
@@ -177,7 +178,7 @@ def parse_key_values(string:str, parent_name:str, sep=':', num = -1):
                 #new_word = True   # no need, already set 'word' to empty string
             else:
                 word += c
-            seps += 1
+            total_seps += 1
         
         elif c == line_break:
             value = word
@@ -185,6 +186,9 @@ def parse_key_values(string:str, parent_name:str, sep=':', num = -1):
             word = ""
             has_char = False
             seen_keyword = False  #reset keyword searching
+        
+            # reset separation number
+            total_seps = 0
         
         elif is_white_space(c):
             new_word = True
@@ -203,6 +207,7 @@ def parse_key_values(string:str, parent_name:str, sep=':', num = -1):
     
     #print("output:",output)
     return output
+
 
 
 
