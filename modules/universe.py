@@ -664,16 +664,16 @@ class Universe:
             print("Momentum collision NOT IMPLEMENTED for relativistic systems.")
             return
     
-        before = self.get_momentum()
+        #before = self.get_momentum()
     
-        net_vel = bod.V
+        #net_vel = bod.V
         i = 0
         n = len(other_bodies)
-        body_num = 0
-        sum = 1
+        #body_num = 0
+        
         
         #momentum_sum = vector.Vector.zero_vector(len(self.centre))
-        results = [None] * n
+        #results = [None] * n
         
         # find all the velocities such that not None and hence find bodies in system to compute new momentum.
         while i < n:
@@ -683,13 +683,19 @@ class Universe:
             if v0 != None:
                 #momentum_sum += vi*other_bodies[i].mass
                 
-                body_num += 1
-                results[i] = (v0,vi)
+                #body_num += 1
+                #results[i] = (v0,vi)
+                bod.V = v0
+                other_bodies[i].V = vi
             i += 1
             
         #new_momentum = self.get_momentum() - momentum_sum/body_num
         
         
+        # THE CODE BELOW IS COMPLETELY PHYSICALLY WRONG!!!!!!
+        # experimentally it appears that the naive method is actually the correct method
+        # that is, update the velocities one by one with every object the object collides with.
+        """
         i = 0
         j = 0
         # do proper update.
@@ -741,11 +747,11 @@ class Universe:
                 net_vel = (self.get_max_speed()/v) * net_vel
 
         bod.V = net_vel
-       
+        """
 
-        after = self.get_momentum()
-        delta = after-before
-        name0 = bod.get_name()
+        #after = self.get_momentum()
+        #delta = after-before
+        #name0 = bod.get_name()
 
         #print(name0 + ".", "change in momentum:", delta.norm())
         #print()
