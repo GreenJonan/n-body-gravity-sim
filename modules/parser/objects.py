@@ -63,6 +63,8 @@ col_name = "name"
 collide_str = "collide"
 elast_str = "elasticity"
 
+drag_str = "drag"
+
 
 # screen
 
@@ -490,6 +492,7 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
     anchor = False
     elasticity = 1
     collide = False
+    drag = False
     
     for pair in key_values:
         keyword = pair[0]
@@ -537,6 +540,11 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
             tmp = parse.parse_maths_string(value, key_name, variables)
             if tmp != None:
                 elasticity = tmp
+        
+        elif keyword == drag_str:
+            drag = True
+            if value != "":
+                drag = get_bool(value, parent_name)
     
         elif keyword == trail_col_str:
             trail_col = get_colour_key_value(value, child_obj, key_name)
@@ -570,6 +578,8 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
     
     b.can_collide = collide
     b.elasticity = elasticity
+
+    b.drag = drag
 
     b.trail_history.max_num = max_trail
     b.trail_history.colour = trail_col

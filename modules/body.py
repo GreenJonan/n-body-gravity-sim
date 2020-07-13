@@ -50,6 +50,7 @@ class Body:
         self.anchor = False
         self.elasticity = 1
         self.can_collide = False
+        self.drag = False
         
         self.name = name
 
@@ -130,14 +131,9 @@ class Body:
         v^@ ==> viscous fluid, v^1 ==> non-viscous
         """
         # F = -R*A*v^2
-        v = 0
-        calc = True
-        if laws != None:
-            if laws[1] != 2:
-                v = metrics.metric_norm(vel, laws[1])
-                calc = False
-        if calc:
-            v = vel.norm()
+        
+        v = metrics.metric_norm(vel, laws[1])
+        
         area = self.radius * self.radius * math.pi
         return  - R_const * area * v * vel
 

@@ -195,8 +195,8 @@ class Universe:
         F_E = self.net_electric_force(body_id, X, consts[1], dist_error)
         F = F_G + F_E
 
-        if self.resistance:
-            F = F + bod.resistance_force(V, (self._nlaw, const[2], self._nmetric))
+        if self.resistance or bod.drag:
+            F = F + bod.resistance_force(V, consts[2], (self._nlaw, self._nmetric))
         return F
 
 
@@ -473,12 +473,15 @@ class Universe:
 
 
     ######  Body collisions.
-
-    def momentum_collision(self, bodA:body.Body, bodB:body.Body):
-        """
+    """
+    def naive_momentum_collision(self, bodA:body.Body, bodB:body.Body):
+        ###
         Given two objects, suppose they collided, now find their final velocities.
         https://en.wikipedia.org/wiki/Coefficient_of_restitution
-        """
+        
+        This method is naive since u,v should be scalars and only the velcity perpendicular to the plane
+        of intersectio  should be modified.
+        ###
 
         if self.relativistic:
             print("Momentum collision NOT IMPLEMENTED for relativistic systems.")
@@ -508,7 +511,82 @@ class Universe:
         bodA.V = vA
         bodB.V = vB
         return
+    """
 
+    def momentum_collision(self, bodA:body.Body, bodB:body.Body):
+        """
+        Given two objects, suppose they collided, now find their final velocities.
+        https://en.wikipedia.org/wiki/Coefficient_of_restitution
+        
+        The velocity along the plane of intersection is unchanged, but the perpendicular component is adjusted
+        by the following:
+        """
+        metric = self._nmetric # 2
+        
+        if self.relativistic:
+            #for relativistic systems, unknown.
+            
+            print("Momentum collision NOT IMPLEMENTED for relativistic systems.")
+            return
+
+
+        else:
+            #for newtonian mechanics:
+            
+            # if vA, vB final speed, and uA, uB initial speed, and mA, mB masses,
+            # (along perpendicular component)
+            # r coefficient of restitution,
+        
+            # vA = ((mA-mB*r)uA + mB(r+1)uB) / (mA + mB)
+            # vB = ((mB-mA*r)uB + mA(r+1)uA) / (mA + mB)
+            
+            mA = bodA.mass
+            mB = bodB.mass
+            
+            if mA + mB == 0:
+                print("Momentum collision NOT IMPLEMENTED for objects with net-zero mass.")
+                return
+            
+        
+            A_to_B = bodB.X - bodA.X
+            A_to_B_unit = A_to_B / metrics.metric_norm(A_to_B, metric)
+            # this is the normal vector for the plane of intersection.
+
+            # vector decomposition.
+            projA = vector.Vector.inner_product(bodA.V, A_to_B_unit)
+            projB = vector.Vector.inner_product(bodB.V, A_to_B_unit)
+            vA_normal = projA * A_to_B_unit
+            vB_normal = projB * A_to_B_unit
+
+            vA_plane = bodA.V - vA_normal
+            vB_plane = bodB.V - vB_normal
+
+
+            # main calculation:
+            uA = sign(projA) * metrics.metric_norm(vA_normal, metric)
+            uB = sign(projB) * metrics.metric_norm(vB_normal, metric)
+
+            r = body.Body.get_coeff_restitution(bodA, bodB)
+            vA = ((mA-mB*r)*uA + mB*(r+1)*uB) / (mA + mB)
+            vB = ((mB-mA*r)*uB + mA*(r+1)*uA) / (mA + mB)
+            
+            new_vA_normal = (vA/uA)*vA_normal  #neg if swaps sign, pos if same sign as original
+            new_vB_normal = (vB/uB)*vB_normal
+        
+            bodA.V = new_vA_normal + vA_plane
+            bodB.V = new_vB_normal + vB_plane
+            
+            """
+            print()
+            print(vA_plane, vA_normal)
+            print(vB_plane, vB_normal)
+            print(bodA.V, bodB.V)
+            """
+            
+            return
+
+    
+    
 
 
     def check_collision(self, bod:body.Body, del_x):
@@ -520,7 +598,11 @@ class Universe:
         min_length = -1
         results = []
         
+        msg = ""
+        
         for other_body in self.bodies:
+            collision = False
+            
             if isinstance(other_body, body.Body):
                 if other_body.id != bod.id:
                     if other_body.can_collide and bod.can_collide:
@@ -555,25 +637,36 @@ class Universe:
                             collision = Collide.n_sphere_collide(new_x, bod.radius, other_body.X,
                                                                    other_body.radius, self._nmetric)
 
-
-                            """
-                            if collision:
-                            print("OBJECTS COLLIDED: {0} and {1}".format(bod.get_name(),
-                                  other_body.get_name()))
-                            input("Press return to continue")
-                            """
                         if collision:
-                            if not collided:
-                                collided = True
                             
-                            if d_original < min_length:
+                            if d_original < min_length or not collided:
+                                msg = ""
                                 min_length = d_original
                                 results = [other_body]
                             else:
+                                msg += ", and "
                                 # this means the object has collided with multiple bodies, same distance away
                                 results.append(other_body)
 
+                            msg += bod.name + " collided with " +  other_body.name
+                            if not collided:
+                                collided = True
+
+        #print(msg)
         return collided, results
+
+
+
+
+
+
+#####  Extra
+
+def sign(x):
+    if x < 0:
+        return -1
+    else:
+        return 1
 
 
 
