@@ -117,12 +117,12 @@ class Universe:
         :input: id number for body
         :return: vector
         """
-
+        
         bod = self.get_body(body_id)
         n = len(bod.X)
         field = vector.Vector.zero_vector(n)
 
-        if bod.mass == 0:
+        if bod.mass == 0 or g_const == 0:
             pass
         else:
             N = len(self.bodies)
@@ -151,7 +151,7 @@ class Universe:
         n = len(bod.X)
         field = vector.Vector.zero_vector(n)
         
-        if bod.charge == 0:
+        if bod.charge == 0 or e_const == 0:
             pass
         else:
             N = len(self.bodies)
@@ -672,6 +672,7 @@ class Universe:
         body_num = 0
         sum = 1
         
+        #momentum_sum = vector.Vector.zero_vector(len(self.centre))
         results = [None] * n
         
         # find all the velocities such that not None and hence find bodies in system to compute new momentum.
@@ -680,11 +681,14 @@ class Universe:
             v0,vi = self.momentum_collision(bod, other_bodies[i])
             
             if v0 != None:
+                #momentum_sum += vi*other_bodies[i].mass
+                
                 body_num += 1
                 results[i] = (v0,vi)
             i += 1
             
-        # something wrong is happening in the sectio below
+        #new_momentum = self.get_momentum() - momentum_sum/body_num
+        
         
         i = 0
         j = 0
@@ -697,6 +701,7 @@ class Universe:
                 # this means the velocity was sucessfully calculated.
                 
                 scale_i = 0
+                ###
                 if random:
                     if j == body_num:
                         scale_i = sum
@@ -706,31 +711,27 @@ class Universe:
                 else:
                     scale_i = 1/body_num
                     #scale_i = 1
+                ###
                     
 
                 v0,vi = vels
                 tmp_delta0 = bod.mass * (v0 - bod.V) + bi.mass * (vi - bi.V)
                 tmp_norm = tmp_delta0.norm()
-                #print(tmp_norm)
-                #assert tmp_norm <= 0.0001, "MOMENTUM IS NOT CONSERVED\n delta p = {0}".format(tmp_norm)
                 
                 Vi = scale_i * vi
 
-                delta_momenta = None
+                delta_vel = None
 
                 # update v0
                 if bod.mass != 0:
-                    delta_momenta = (bi.mass / bod.mass) * (bi.V - Vi)
+                    delta_vel = (bi.mass / bod.mass) * (bi.V - Vi)
                 else:
-                    delta_momenta =  v0
+                    delta_vel = v0
                  
-                net_vel += delta_momenta
-                
-                #print(delta_momenta.norm())
-        
+                net_vel += delta_vel
                 bi.V = Vi
             i += 1
-
+        
 
         # final adjustments if object has zero mass.
 
@@ -740,6 +741,7 @@ class Universe:
                 net_vel = (self.get_max_speed()/v) * net_vel
 
         bod.V = net_vel
+       
 
         after = self.get_momentum()
         delta = after-before

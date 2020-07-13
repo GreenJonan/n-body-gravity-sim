@@ -88,22 +88,34 @@ title_size_str = "titleSize"
 
 # variable parser
 
-def parse_variables(strings:list, parent_name:str, variables:dict):
+def parse_variables(strings:list, parent_name:str, children:list, variables:dict):
     """
     Given a set of variables and values, place them into the variables dictionary.
     Variables are specified by '=' rather than ':', which indicates attributes.
     """
+    #print(strings, children, type(children[0]))
     if len(strings) != 1:
         param_error(parent_name, strings, 1)
     string = strings[0]
     
     key_values = parse.parse_key_values(string, parent_name, sep="=")
+    #print(key_values)
 
     for pair in key_values:
         name = pair[0]
         value = pair[1]
+        val = None
 
-        val = parse.parse_maths_string(value, parent_name, variables)
+        if len(value) > 0:
+            if value[0] == '#':
+                val = get_subobject(value, children, parent_name, variables)
+
+            else:
+                val = parse.parse_maths_string(value, parent_name, variables)
+        else:
+            raise SyntaxError("\nStack Trace: {0}\nNo character string following equality sign."\
+                              .format(parent_name))
+
         variables[name] = val
     return variables
 
@@ -407,7 +419,7 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
             passed_dim = True
         
         elif keyword == centre_str:
-            centre = get_vector_key_value(value, children_obj, my_name)
+            centre = get_vector_key_value(value, children_obj, my_name, variables)
 
         elif keyword == rest_str:
             resistance = get_bool(value, my_name)
@@ -501,10 +513,10 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
         key_name = parent_name + ">" + keyword
     
         if keyword == x_str:
-            X = get_vector_key_value(value, child_obj, key_name)
+            X = get_vector_key_value(value, child_obj, key_name, variables)
     
         elif keyword == v_str:
-            V = get_vector_key_value(value, child_obj, key_name)
+            V = get_vector_key_value(value, child_obj, key_name, variables)
         
         elif keyword == m_str:
             tmp = parse.parse_maths_string(value, key_name, variables)
@@ -525,7 +537,7 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
             name = value
 
         elif keyword == col_str:
-            col = get_colour_key_value(value, child_obj, key_name)
+            col = get_colour_key_value(value, child_obj, key_name, variables)
         
         elif keyword == anch_str:
             anchor = True
@@ -547,7 +559,7 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
                 drag = get_bool(value, parent_name)
     
         elif keyword == trail_col_str:
-            trail_col = get_colour_key_value(value, child_obj, key_name)
+            trail_col = get_colour_key_value(value, child_obj, key_name, variables)
         elif keyword == skip_str:
             tmp = parse.parse_maths_string(value, key_name, variables)
             if tmp != None:
@@ -639,9 +651,9 @@ def parse_screen(strings:list, child_obj:list, parent_name, variables:dict):
                 scale = tmp
 
         elif name == back_str:
-            screen_col = get_colour_key_value(value, child_obj, my_name)
+            screen_col = get_colour_key_value(value, child_obj, my_name, variables)
         elif name == txt_col_str:
-            text_col = get_colour_key_value(value, child_obj, my_name)
+            text_col = get_colour_key_value(value, child_obj, my_name, variables)
 
         elif name == default_msg:
             msg = value
@@ -667,47 +679,55 @@ def parse_screen(strings:list, child_obj:list, parent_name, variables:dict):
 ################### helper functions
 
 
-def get_vector_key_value(value:str, ls:list, parent_name:str):
+def get_subobject(value:str, ls:list, parent_name:str, variables:dict):
     err = False
-    if len(value) < 2:
-        err = True
-    elif value[0] != '#':
-        err = True
-    if err:
-        raise SyntaxError("\nStack Trace: {0}\nIncorrectly parsed Vector string '{1}'"\
-                            .format(parent_name, value))
-
-    pos = value.lstrip('#')
-    pos_int = int(pos)
-                              
-    sub_obj = ls[pos_int]
-    if not isinstance(sub_obj, vector.Vector):
-        raise TypeError("\nStack Trace: {0}\nVector subvalue is non-vector, type: '{1}'\n '{2}'"\
-                        .format(parent_name, type(sub_obj), sub_obj))
+    val = None
+    
+    if len(value) < 1:
+        raise SyntaxError("\nStack Trace: {0}\nNo string following vector object.".format(parent_name))
     else:
-        return sub_obj
+        
+        if value[0] != '#':
+            val = parse.parse_maths_string(value, parent_name, variables)
 
+        else:
+            pos_str = pos = value.lstrip('#')
+            pos_index = 0
+            try:
+                pos_index = int(pos_str)
+                val = ls[pos_index]
+            except ValueError:
+                err = True
+            except IndexError:
+                err = True
 
-
-def get_colour_key_value(value:str, ls:list, parent_name:str):
-    err = False
-    if len(value) < 2:
-        err = True
-    elif value[0] != '#':
-        err = True
     if err:
-        raise SyntaxError("\nStack Trace: {0}\nIncorrectly parsed Colour string '{1}'"\
+        raise SyntaxError("\nStack Trace: {0}\nIncorrectly parsed Object string '{1}'"\
                           .format(parent_name, value))
 
-    pos = value.lstrip('#')
-    pos_int = int(pos)
-    
-    sub_obj = ls[pos_int]
-    if not isinstance(sub_obj, tuple):
-        raise TypeError("\nStack Trace: {0}\nColour subvalue is non-tuple, type: '{1}'"\
-                        .format())
+    return val
+
+
+
+def get_vector_key_value(value:str, ls:list, parent_name:str, variables:dict):
+    vec = get_subobject(value, ls, parent_name + ">vector", variables)
+
+    if not isinstance(vec, vector.Vector):
+        raise TypeError("\nStack Trace: {0}\nVector subvalue is non-vector, type: '{1}'\n '{2}'"\
+                        .format(parent_name, type(vec), vec))
     else:
-        return sub_obj
+        return vec
+
+
+
+
+def get_colour_key_value(value:str, ls:list, parent_name:str, variables:dict):
+    colour_val = get_subobject(value, ls, parent_name + ">colour", variables)
+    if not isinstance(colour_val, tuple):
+        raise TypeError("\nStack Trace: {0}\nColour subvalue is non-tuple, type: '{1}'"\
+                        .format(parent_name, colour_val))
+    else:
+        return colour_val
 
 
 

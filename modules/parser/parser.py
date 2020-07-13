@@ -47,6 +47,16 @@ def is_keyword(string:str):
 
 
 
+def is_variable_object(string:str):
+    if string == vect_str:
+        return True
+    elif string == col_str:
+        return True
+    else:
+        return False
+
+
+
 
 default_variables = {"pi":math.pi, "au":1.496e11}
 
@@ -150,7 +160,7 @@ class ParseTree:
         
         
         elif name == var_str:
-            return [ objects.parse_variables(self.strings, my_name, variables) ]
+            return [ objects.parse_variables(self.strings, my_name, child_objects, variables) ]
     
         elif name == uni_str:
             return [ objects.parse_universe(self.strings, child_objects, my_name, variables) ]
@@ -281,9 +291,8 @@ def parse_file_section(f, parse_root:ParseTree):  #object_name=""):
             else:
                 
                 if c == '{':
-                    #print("string:", string)
                     
-                    if expect_object:
+                    if expect_object or is_variable_object(prev_word):
                         string += "#" + str(parse_root.child_num())
                         expect_object = False
                     
