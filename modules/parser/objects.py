@@ -60,6 +60,9 @@ col_str = "colour"
 rgb_str = "rgb"
 col_name = "name"
 
+collide_str = "collide"
+elast_str = "elasticity"
+
 
 # screen
 
@@ -485,7 +488,8 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
     skip_num = 0
     
     anchor = False
-    
+    elasticity = 1
+    collide = False
     
     for pair in key_values:
         keyword = pair[0]
@@ -525,6 +529,15 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
             if value != "":
                 anchor = get_bool(value, parent_name)
         
+        elif keyword == collide_str:
+            collide = True
+            if value != "":
+                collide = get_bool(value, parent_name)
+        elif keyword == elast_str:
+            tmp = parse.parse_maths_string(value, key_name, variables)
+            if tmp != None:
+                elasticity = tmp
+    
         elif keyword == trail_col_str:
             trail_col = get_colour_key_value(value, child_obj, key_name)
         elif keyword == skip_str:
@@ -554,6 +567,9 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
     # final adjustments
     if anchor:
         b.toggle_anchor()
+    
+    b.can_collide = collide
+    b.elasticity = elasticity
 
     b.trail_history.max_num = max_trail
     b.trail_history.colour = trail_col

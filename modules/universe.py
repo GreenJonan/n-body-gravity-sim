@@ -14,6 +14,7 @@ from modules import body
 from modules import vector, metrics
 from modules import constants
 from modules import colour
+from modules import collision as Collide
 
 import math,sys
 
@@ -101,7 +102,7 @@ class Universe:
 
     #####  FIELDS - for each body object.
 
-    def net_gravity_field(self, body_id, X:vector.Vector, dist_error):
+    def net_gravity_field(self, body_id, X:vector.Vector, g_const, dist_error):
         """
         Calculate the gravitational field at the location of the body.
         :input: id number for body
@@ -124,13 +125,13 @@ class Universe:
                     if other_body.id == body_id:
                         pass # dont compute field between self
                     else:
-                        tmp_field = other_body.gravity_field(X, dist_error, (self._nlaw, self._nmetric))
+                        tmp_field = other_body.gravity_field(X, g_const, dist_error, (self._nlaw, self._nmetric))
                         field = tmp_field + field
                 i += 1
         return field
 
 
-    def net_electric_field(self, body_id, X:vector.Vector, dist_error):
+    def net_electric_field(self, body_id, X:vector.Vector, e_const, dist_error):
         """
         Calculate the electric field at the location of the body.
         :input: id number for body
@@ -153,7 +154,7 @@ class Universe:
                     if other_body.id == body_id:
                         pass # dont compute field between self
                     else:
-                        tmp_field = other_body.electric_field(X, dist_error, (self._nlaw, self._nmetric))
+                        tmp_field = other_body.electric_field(X, e_const, dist_error, (self._nlaw, self._nmetric))
                         field = tmp_field + field
                 i += 1
         return field
@@ -162,7 +163,7 @@ class Universe:
 
     #####  FORCES
 
-    def net_gravity_force(self, body_id:int, X:vector.Vector, dist_error):
+    def net_gravity_force(self, body_id:int, X:vector.Vector, g_const, dist_error):
         """
         Given a body, calculate the net gravity field
         """
@@ -170,10 +171,10 @@ class Universe:
         if bod == None:
             raise TypeError("Error: Cannot compute gravity force for None Object.")
 
-        return bod.mass * self.net_gravity_field(body_id, X, dist_error)
+        return bod.mass * self.net_gravity_field(body_id, X, g_const, dist_error)
 
 
-    def net_electric_force(self, body_id:int, X:vector.Vector, dist_error):
+    def net_electric_force(self, body_id:int, X:vector.Vector, e_const, dist_error):
         """
         Given a body, calculate the net electric field
         """
@@ -181,24 +182,26 @@ class Universe:
         if bod == None:
             raise TypeError("Error: Cannot compute gravity force for None Object.")
                         
-        return bod.charge * self.net_electric_field(body_id, X, dist_error)
+        return bod.charge * self.net_electric_field(body_id, X, e_const, dist_error)
 
 
 
-    def net_force(self, body_id, X:vector.Vector, V:vector.Vector, dist_error):
+    def net_force(self, body_id, X:vector.Vector, V:vector.Vector, consts:tuple, dist_error):
         """
         Given a body, find the total force it experiences.
         """
         bod = self.get_body(body_id)
-        F = self.net_gravity_force(body_id, X, dist_error) + self.net_electric_force(body_id, X, dist_error)
+        F_G = self.net_gravity_force(body_id, X, consts[0], dist_error)
+        F_E = self.net_electric_force(body_id, X, consts[1], dist_error)
+        F = F_G + F_E
 
         if self.resistance:
-            F = F + bod.resistance_force(V, (self._nlaw, self._nmetric))
+            F = F + bod.resistance_force(V, (self._nlaw, const[2], self._nmetric))
         return F
 
 
 
-    def net_acceleration(self, obj:body.Body, X:vector.Vector, V:vector.Vector, dist_error, warning):
+    def net_acceleration(self, obj:body.Body, X:vector.Vector, V:vector.Vector, consts, dist_error, warning):
         if obj.mass == 0:
             return vector.Vector.zero_vector(len(self.centre))
         else:
@@ -206,7 +209,7 @@ class Universe:
             #print(V.norm(), self.max_speed)
             
             # NON-RELATIVISTIC FORCES
-            F = self.net_force(obj.id, X, V, dist_error)
+            F = self.net_force(obj.id, X, V, consts, dist_error)
 
             if self.relativistic:
                 return self.relativistic_acceleration(obj.mass, V, F, warning)
@@ -215,7 +218,7 @@ class Universe:
 
 
 
-    def runge_kutta_method(self, obj:body.Body, t:float, dist_error:float, warning:bool):
+    def runge_kutta_method(self, obj:body.Body, t:float, phys_consts:tuple, dist_error:float, warning:bool):
         """
         Update the position and velocity of the object.
             
@@ -241,16 +244,16 @@ class Universe:
         #force = self.net_force(obj.id, obj.X, obj.V)
         #print("Inital Force:",force, obj.name)
 
-        kv1 = self.net_acceleration(obj, obj.X, obj.V, dist_error, warning)
+        kv1 = self.net_acceleration(obj, obj.X, obj.V, phys_consts, dist_error, warning)
         kx1 = obj.V
 
-        kv2 = self.net_acceleration(obj, obj.X + kx1*(t/2), obj.V + kv1*(t/2), dist_error, warning)
+        kv2 = self.net_acceleration(obj, obj.X + kx1*(t/2), obj.V + kv1*(t/2), phys_consts, dist_error, warning)
         kx2 = obj.V + (t/2) * kv1
 
-        kv3 = self.net_acceleration(obj, obj.X + kx2*(t/2), obj.V + kv2*(t/2), dist_error, warning)
+        kv3 = self.net_acceleration(obj, obj.X + kx2*(t/2), obj.V + kv2*(t/2), phys_consts, dist_error, warning)
         kx3 = obj.V + (t/2) * kv2
 
-        kv4 = self.net_acceleration(obj, obj.X + kx3*t, obj.V + kv3*t, dist_error, warning)
+        kv4 = self.net_acceleration(obj, obj.X + kx3*t, obj.V + kv3*t, phys_consts, dist_error, warning)
         kx4 = obj.V + kv3*t
 
         #new_v = obj.V + (t/6) * (kv1 + 2*kv2 + 2*kv3 + kv4)
@@ -264,11 +267,25 @@ class Universe:
         new_v = self.correct_velocity(new_v, warning)
 
         # Update Position and Velocity Vectors
-        obj.X_prev = obj.X
-        obj.V_prev = obj.V
-
-        obj.X = new_x
+        #obj.X_prev = obj.X
+        #obj.V_prev = obj.V
+        
         obj.V = new_v
+        # note should velocity be updated if it previously collided
+        
+        # see if body collides with other bodies
+        collision, other_bodies = self.check_collision(obj, del_x)
+
+        if not collision:
+            obj.X = new_x
+        else:
+            if len(other_bodies) > 1:# and warning:
+                print("WARNING: Multiple bodies collided, untested feature.")
+            # current method for collision with multiple bodies,
+            # update the momentum collisions between every body.
+            
+            for other_bod in other_bodies:
+                self.momentum_collision(obj, other_bod)
         
         #print("Position:",obj.X, obj.X_prev, del_x)
         #print("Velocity:",obj.V, obj.V_prev, del_v)
@@ -277,7 +294,7 @@ class Universe:
 
 
 
-    def update_all_bodies(self, t:float, dist_error:float, warning:bool):
+    def update_all_bodies(self, t:float, phys_consts:tuple, dist_error:float, warning:bool):
         """
         Use numeric methods to update the velocities and positions of ALL of the Body objects.
         """
@@ -291,7 +308,7 @@ class Universe:
                 # update only if non-anchor:
                 if not bod.anchor:
                     # Apply numeric method
-                    self.runge_kutta_method(bod, t, dist_error, warning)
+                    self.runge_kutta_method(bod, t, phys_consts, dist_error, warning)
                     
                     """
                     if self.display_trails:
@@ -440,11 +457,7 @@ class Universe:
                     v = metrics.metric_norm(V,self._nmetric)
 
                 if v > c:
-                    name = ""
-                    if bod.name != "":
-                        name = bod.name
-                    else:
-                        name = "Body " + str(bod.id)
+                    name = bod.get_name()
                     print("Warning: {0} has speed faster than Universal Speed limit c={1}\n V={2}, v={3}\n Adjusting speed..."\
                           .format(name, c, bod.V, v))
 
@@ -459,7 +472,108 @@ class Universe:
 
 
 
+    ######  Body collisions.
 
+    def momentum_collision(self, bodA:body.Body, bodB:body.Body):
+        """
+        Given two objects, suppose they collided, now find their final velocities.
+        https://en.wikipedia.org/wiki/Coefficient_of_restitution
+        """
+
+        if self.relativistic:
+            print("Momentum collision NOT IMPLEMENTED for relativistic systems.")
+            return
+
+        # for newtonian mechanics:
+        # if vA, vB final velocities, and uA, uB initial velocities, and mA, mB masses,
+        # r coefficient of restitution,
+
+        # vA = ((mA-mB*r)uA + mB(r+1)uB) / (mA + mB)
+        # vB = ((mB-mA*r)uB + mA(r+1)uA) / (mA + mB)
+
+
+        r = body.Body.get_coeff_restitution(bodA, bodB)
+        uA = bodA.V
+        uB = bodB.V
+        mA = bodA.mass
+        mB = bodB.mass
+        
+        if mA + mB == 0:
+            print("Momentum collision NOT IMPLEMENTED for objects with net-zero mass.")
+            return
+
+        vA = ((mA-mB*r)*uA + mB*(r+1)*uB) / (mA + mB)
+        vB = ((mB-mA*r)*uB + mA*(r+1)*uA) / (mA + mB)
+
+        bodA.V = vA
+        bodB.V = vB
+        return
+
+
+
+    def check_collision(self, bod:body.Body, del_x):
+        """
+        Check whether any objects collide.
+        """
+        
+        collided = False
+        min_length = -1
+        results = []
+        
+        for other_body in self.bodies:
+            if isinstance(other_body, body.Body):
+                if other_body.id != bod.id:
+                    if other_body.can_collide and bod.can_collide:
+                
+                        # see if the two bodies will collide.
+                        # if so, change the positions & velocities.
+                
+                        # collision can only occur if the object is travelling towards 'other_body'
+                        # diff means difference.
+                        # can't tell whether moving towards or away, so treat all cases equally
+                
+                        # consider del_x, moving to if ||del_x|| <= d(x1,x2)
+                
+                        # multiple collisions may occur, find the one such that the other_body has the
+                        # shortest distance from the bod, this means it will collide first.
+                        
+                        
+                        # distance between other_body and bod
+                        d_original = metrics.general_n_euclid_metric(bod.X, other_body.X, self._nmetric)
+                        
+                        
+                        if not collided or d_original <= min_length:
+                            
+                            d_new = metrics.metric_norm(del_x, self._nmetric)
+                        
+                            tmp_del_x = del_x
+                            if d_original < d_new:
+                                tmp_del_x = tmp_del_x * (d_original/d_new)
+
+                            # now check if collision occurs,
+                            new_x = bod.X + tmp_del_x
+                            collision = Collide.n_sphere_collide(new_x, bod.radius, other_body.X,
+                                                                   other_body.radius, self._nmetric)
+
+
+                            """
+                            if collision:
+                            print("OBJECTS COLLIDED: {0} and {1}".format(bod.get_name(),
+                                  other_body.get_name()))
+                            input("Press return to continue")
+                            """
+                        if collision:
+                            if not collided:
+                                collided = True
+                            
+                            if d_original < min_length:
+                                min_length = d_original
+                                results = [other_body]
+                            else:
+                                # this means the object has collided with multiple bodies, same distance away
+                                results.append(other_body)
+
+        return collided, results
 
 
 

@@ -87,7 +87,7 @@ def distance(v1:Vec, v2:Vec):
 
 def metric_norm(v:Vec, N):
     val = 0
-    n = len(vec1)
+    n = len(v)
     i = 0
     while i < n:
         val += abs(v.components[i]) ** N

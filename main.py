@@ -90,7 +90,7 @@ if screen.scale < 0:
     if w < length:
         length = w
 
-    screen.scale = max_dist / (length * 2)
+    screen.scale = max_dist / (length)
     screen.default_scale = screen.scale
 
 
@@ -203,11 +203,15 @@ for body in universe.bodies:
 """
 
 
+phys_consts = (constants.G, constants.E, constants.R)
+
 
 loops = -1
 
 start_screen = True
 paused = False
+
+help = False
 
 
 run = True
@@ -251,6 +255,10 @@ while run:
                     else:
                         universe.clear_trails()
 
+                elif event.key == pygame.K_h:
+                    print("TODO: help message")
+
+
     ###  draw functions
 
     screen.update_origin_tracking(universe)
@@ -266,7 +274,7 @@ while run:
         i = 0
         while i < constants.update_number:
             universe.update_all_bodies(constants.time_step / constants.update_number,
-                                       constants.distance_error, constants.warning)
+                                       phys_consts, constants.distance_error, constants.warning)
             
             """
             pass_start = earth.X.components[1] >= 0 >= earth.X_prev.components[1]\
