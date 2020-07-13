@@ -570,8 +570,11 @@ class Universe:
             vA = ((mA-mB*r)*uA + mB*(r+1)*uB) / (mA + mB)
             vB = ((mB-mA*r)*uB + mA*(r+1)*uA) / (mA + mB)
             
-            new_vA_normal = (vA/uA)*vA_normal  #neg if swaps sign, pos if same sign as original
-            new_vB_normal = (vB/uB)*vB_normal
+            #new_vA_normal = (vA/uA)*vA_normal  #neg if swaps sign, pos if same sign as original
+            #new_vB_normal = (vB/uB)*vB_normal
+            
+            new_vA_normal = vA * A_to_B_unit
+            new_vB_normal = vB * A_to_B_unit
         
             bodA.V = new_vA_normal + vA_plane
             bodB.V = new_vB_normal + vB_plane
