@@ -1,9 +1,17 @@
 import sys
 int_max = 2147483647
+max_distance = 25000
 
 import pygame
-import modules.body as b, modules.universe as u, modules.vector as v,\
-    modules.constants as c, modules.colour as col
+
+import modules.body as b,\
+    modules.universe as u,\
+    modules.vector as v,\
+    modules.constants as c,\
+    modules.colour as col
+
+from modules import collision
+
 #import body as b, universe as u, vector as v, constants as c, colour as col
 import math
 
@@ -226,10 +234,7 @@ class UniverseScreen:
         
         else:
             body = U.get_body(self.track_id)
-            msg = body.name
-            
-            if msg == "":
-                msg = "Body " + str(self.track_id)
+            msg = body.get_name()
 
             colour = body.colour
                 
@@ -265,36 +270,13 @@ class UniverseScreen:
         x,y=0,0
         width,height = self.dims
 
-        #x = self.get_x_pix(X)
-        #y = self.get_y_pix(X)
         r = math.ceil(body.radius / self.scale)
 
-        #x_px,y_px = (x + self.screen_centre[0], -y + self.screen_centre[1])
         x_px = self.get_x_pix(X)
         y_px = self.get_y_pix(X)
 
-        # now compute bounding box:
-        R = r-1
-        if R < 0:
-            R = 0
-        
-        x_min = x_px - R; x_max = x_px + R
-        y_min = y_px - R; y_max = y_px + R
-        
-        
-        #y_in_range = 0 <= y_px < height or 0 <= y_min < height or 0 <= y_max < height
-        #x_in_range = 0 <= x_px < width or 0 <= x_min < width or 0 <= x_max < width
+        self.draw_ball((x_px,y_px), r, body.colour, body.get_name())
 
-        y_in_range = self.point_in_range(0,height, y_px) or self.point_in_range(0,height, y_min)\
-            or self.point_in_range(0,height, y_max)
-        x_in_range = self.point_in_range(0,width, x_px) or self.point_in_range(0,width, x_min)\
-            or self.point_in_range(0,width, x_max)
-
-        if x_in_range and y_in_range:
-            if r > int_max:
-                r = 0
-                # pygame throws an int overflow error when this is the case
-            pygame.draw.circle(self.screen, body.colour, (x_px,y_px), r)
 
 
 
@@ -303,9 +285,75 @@ class UniverseScreen:
 
 
 
+
+    def draw_ball(self, centre, radius, colour, name="", fill=True):
+        """
+        Given a ball with centre and radius (in pixels), draw it on the screen.
+        
+        When the radius is too large, if not fill, represent the ball as a single pixel.
+        """
+        
+        x_px,y_px = centre
+        on_screen = self.body_on_screen(centre, radius)
+    
+        if on_screen:
+            
+            del_x = x_px - self.screen_centre[0]
+            del_y = y_px - self.screen_centre[1]
+            centre_diff = math.sqrt((del_x)**2 + (del_y)**2)
+            
+            far_away = centre_diff >= max_distance
+            inside_screen = collision.circle_inside_rectangle((0,0), self.dims, centre, radius)
+            
+        
+            if not far_away:
+                if radius > int_max:
+                    # int Overflow error, integer greater than standard c integer max_size.
+                    if fill:
+                        self.screen.fill(colour)
+                        return
+                    else:
+                        radius = 0
+                
+                pygame.draw.circle(self.screen, colour, centre, radius)
+        
+            else:
+                # When the radius is too large, the circle is no longer drawn correctly.
+                # hence draw an approximate polygon and fill the area.
+                
+                if inside_screen:
+                    self.screen.fill(colour)
+                
+                else:
+                    points = collision.get_rectangle_circle_outline((0,0), self.dims, centre, radius)
+                    
+                    if len(points) > 2:
+                        pygame.draw.polygon(self.screen, colour, points)
+                    elif len(points) == 2:
+                        pygame.draw.line(self.screen, colour, points[0], points[1], 1)
+                    
+                    elif len(points) == 1:
+                        # only one point intersects so, draw the single point
+                        pygame.draw.circle(self.screen, colour, (x_px,y_px),0)
+                
+                    else:
+                        raise ValueError("Invalid length of points: {0}, to draw object '{1}'"\
+                                         .format(points, name))
+
+
+
+
+
+
     @staticmethod
     def point_in_range(min,max, val):
         return min <= val < max
+    
+    
+    def body_on_screen(self, centre, radius):
+        return collision.rectangle_circle_collide((0,0), self.dims, centre, radius)
+
+    
     
     def get_x_pix(self, X):
         tmp_x = self.get_pixel(X.components[self.proj[0]] - self.centre[0])
