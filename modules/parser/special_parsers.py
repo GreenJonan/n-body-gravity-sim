@@ -552,14 +552,14 @@ class MathList:
                     
                     return [left, right]
                     
-
+            """
             # see if the first pointer is a lefthand function.
             if isinstance(pointer.value, str):
                 if maths_1left_func(pointer.value):
                     right = construct_tree_subset(pointer.next, end_pointer, parent_name)
                     #print("here", pointer.value, right)
                     return [pointer.value, right]
-            
+            """
             
             # otherwise triple or more,
 
@@ -569,6 +569,8 @@ class MathList:
             first_pow = None
             first_mult = None
             first_add = None
+            
+            sign = False
 
             left_elem = False
 
@@ -584,15 +586,26 @@ class MathList:
                         left_elem = False
                         if first_pow == None:
                             first_pow = p
+                        left_elem = False
 
                     elif value == '*' or value == '/':
                         left_elem = False
                         if first_mult == None:
                             first_mult = p
+                        left_elem = False
 
                     elif value == '+' or value == '-':
-                        if first_add == None and left_elem:
+                        if sign and left_elem:
+                            # sign ==> form of -x, hence if x-y form take that over -x
                             first_add = p
+                            sign = False
+                        
+                        elif first_add == None:
+                            first_add = p
+                            if left_elem:
+                                pass
+                            else:
+                                sign = True
                         left_elem = False
                     
                     elif value == '<' or value == '>' or value == '<=' or value == '>=':
@@ -614,12 +627,17 @@ class MathList:
             
             if first_eq != None:
                 func_p = first_eq
-            elif first_add != None:
+            elif first_add != None and not sign:
                 func_p = first_add
             elif first_mult != None:
                 func_p = first_mult
             elif first_pow != None:
                 func_p = first_pow
+
+            elif first_add and sign:
+                #print("here", first_add.next.value, first_add.next.next.value)
+                right = construct_tree_subset(first_add.next, end_pointer, parent_name)
+                return [first_add.value, right]
             else:
                 # get string representation of values
                 value_str, full_str = error_string(pointer, end_pointer)

@@ -16,7 +16,7 @@ from modules import constants
 from modules import colour
 from modules import collision as Collide
 
-import math,sys
+import math,sys, random as rnd
 
 
 
@@ -38,6 +38,9 @@ class Universe:
         self._nlaw = 2
         self._nmetric = 2
     
+        self.assertion = False
+    
+    
     def __repr__(self):
         body_str = ""
         for bod in self.bodies:
@@ -58,6 +61,12 @@ class Universe:
 
     def get_body(self, body_id):
         return self.bodies[body_id-1]
+
+    def get_max_speed(self):
+        if max_speed < 0:
+            return sys.max_size
+        else:
+            return self.max_speed
 
 
 
@@ -279,6 +288,8 @@ class Universe:
         if not collision:
             obj.X = new_x
         else:
+            self.multi_momentum_collision(obj, other_bodies)
+            """
             if len(other_bodies) > 1:# and warning:
                 print("WARNING: Multiple bodies collided, untested feature.")
             # current method for collision with multiple bodies,
@@ -286,6 +297,7 @@ class Universe:
             
             for other_bod in other_bodies:
                 self.momentum_collision(obj, other_bod)
+            """
         
         #print("Position:",obj.X, obj.X_prev, del_x)
         #print("Velocity:",obj.V, obj.V_prev, del_v)
@@ -473,6 +485,16 @@ class Universe:
 
 
     ######  Body collisions.
+    
+    def get_momentum(self):
+        sum = vector.Vector.zero_vector(len(self.centre))
+        for bod in self.bodies:
+            if isinstance(bod,body.Body):
+                sum += bod.mass * bod.V
+        return sum
+
+
+    
     """
     def naive_momentum_collision(self, bodA:body.Body, bodB:body.Body):
         ###
@@ -527,7 +549,7 @@ class Universe:
             #for relativistic systems, unknown.
             
             print("Momentum collision NOT IMPLEMENTED for relativistic systems.")
-            return
+            return None,None
 
 
         else:
@@ -545,11 +567,16 @@ class Universe:
             
             if mA + mB == 0:
                 print("Momentum collision NOT IMPLEMENTED for objects with net-zero mass.")
-                return
+                return None,None
             
-        
+            
             A_to_B = bodB.X - bodA.X
-            A_to_B_unit = A_to_B / metrics.metric_norm(A_to_B, metric)
+            
+            d = metrics.metric_norm(A_to_B, metric)
+            if d == 0:
+                return None,None
+        
+            A_to_B_unit = A_to_B / d
             # this is the normal vector for the plane of intersection.
 
             # vector decomposition.
@@ -576,20 +603,157 @@ class Universe:
             new_vA_normal = vA * A_to_B_unit
             new_vB_normal = vB * A_to_B_unit
         
-            bodA.V = new_vA_normal + vA_plane
-            bodB.V = new_vB_normal + vB_plane
-            
-            """
-            print()
-            print(vA_plane, vA_normal)
-            print(vB_plane, vB_normal)
-            print(bodA.V, bodB.V)
-            """
-            
-            return
+            VA = new_vA_normal + vA_plane
+            VB = new_vB_normal + vB_plane
 
+
+            # this is the maximum error allowed in terms of the ratio of the momenta before to after
+            err = 6e-16
+
+            if self.assertion:
+                momenta_inital = mA*bodA.V + mB*bodB.V
+                momenta_final  = mA*VA + mB*VB
+                
+                delta_momenta = momenta_final - momenta_inital
+                
+                delta_norm = delta_momenta.norm()
+                inital_norm = momenta_inital.norm()
+                final_norm = momenta_final.norm()
+                
+                
+                
+                if inital_norm == 0 and final_norm == 0:
+                    pass
+                else:
+                    ratio = 0
+                    if initial_norm > 0:
+                        ratio = delta_norm / inital_norm
+                    else:
+                        ratio = delta_norm / final_norm
+                
+                    if ratio > err:
+                        print(final_norm / inital_norm)
+                        momenta_str = "Momenta before: {0}\nMomenta after:  {1}"\
+                                      .format(momenta_inital, momenta_final)
+                        momentaA_str = "Momenta A: {0}\n           {1}".format(mA*bodA.V, mA*VA)
+                        momentaB_str = "Momenta B: {0}\n           {1}".format(mB*bodB.V, mB*VB)
+                        warning_str = "MOMENTUM IS NOT CONSERVED\n ratio {0}, delta p = {1}"\
+                                      .format(ratio, delta_norm)
+
+                        assert ratio <= err, warning_str + "\n\n" + momenta_str + "\n\n" + momentaA_str + "\n\n" + momentaB_str
+            
+            return VA,VB
+
+
+
+    def multi_momentum_collision(self, bod:body.Body, other_bodies:list, random=False):
+        """
+        let object 0 be bod, and object i be the i-th body in other_bodies.
+        Suppose object i has a_i amount of it's initial momentum, 
+        then vi = ai * vi', where vi' is the velocity returned from 'momentum_collision' function.
+        
+        Also:
+        v0 = u0 + m1/m0 (u1-v1) + ... + mn/m0 (un-vn)
+        Hence, function is undefined if mass of particle is zero.
+        
+        Defintion for m=0:
+            velocity is the sum of velocities returned from 'momentum_collision' for self, but scaled such
+            that it's velocity is max velocity.
+        """
+        if self.relativistic:
+            print("Momentum collision NOT IMPLEMENTED for relativistic systems.")
+            return
     
+        before = self.get_momentum()
     
+        net_vel = bod.V
+        i = 0
+        n = len(other_bodies)
+        body_num = 0
+        sum = 1
+        
+        results = [None] * n
+        
+        # find all the velocities such that not None and hence find bodies in system to compute new momentum.
+        while i < n:
+            #print("here 0")
+            v0,vi = self.momentum_collision(bod, other_bodies[i])
+            
+            if v0 != None:
+                body_num += 1
+                results[i] = (v0,vi)
+            i += 1
+            
+        # something wrong is happening in the sectio below
+        
+        i = 0
+        j = 0
+        # do proper update.
+        while i < n:
+            vels = results[i]
+            if vels != None:
+                bi = other_bodies[i]
+                j += 1
+                # this means the velocity was sucessfully calculated.
+                
+                scale_i = 0
+                if random:
+                    if j == body_num:
+                        scale_i = sum
+                    else:
+                        scale_i = rnd.random() * sum
+                    sum -= scale_i
+                else:
+                    scale_i = 1/body_num
+                    #scale_i = 1
+                    
+
+                v0,vi = vels
+                tmp_delta0 = bod.mass * (v0 - bod.V) + bi.mass * (vi - bi.V)
+                tmp_norm = tmp_delta0.norm()
+                #print(tmp_norm)
+                #assert tmp_norm <= 0.0001, "MOMENTUM IS NOT CONSERVED\n delta p = {0}".format(tmp_norm)
+                
+                Vi = scale_i * vi
+
+                delta_momenta = None
+
+                # update v0
+                if bod.mass != 0:
+                    delta_momenta = (bi.mass / bod.mass) * (bi.V - Vi)
+                else:
+                    delta_momenta =  v0
+                 
+                net_vel += delta_momenta
+                
+                #print(delta_momenta.norm())
+        
+                bi.V = Vi
+            i += 1
+
+
+        # final adjustments if object has zero mass.
+
+        if bod.mass == 0:
+            v = metrics.metric_norm(net_vel, self._nmetric)
+            if v != 0:
+                net_vel = (self.get_max_speed()/v) * net_vel
+
+        bod.V = net_vel
+
+        after = self.get_momentum()
+        delta = after-before
+        name0 = bod.get_name()
+
+        #print(name0 + ".", "change in momentum:", delta.norm())
+        #print()
+        return
+
+
+
+
+
+
 
 
     def check_collision(self, bod:body.Body, del_x):
