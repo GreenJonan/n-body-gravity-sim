@@ -25,6 +25,17 @@ from modules import constants
 
 Vec = v.Vector
 
+
+
+
+def unit_vector(v:Vec, metric=2):
+    length = metric_norm(v, metric)
+    if length == 0:
+        return v
+    else:
+        return v / length
+
+
     
 #####   Metric and Distance functions.
 
