@@ -43,6 +43,9 @@ random_col_str = "randomCollision"
 assert_str = "assertError"
 shuffle_str = "shuffleBody"
 
+wall_str = "boxDimensions"
+wall_collide_str = "wallCollision"
+
 
 # body
 x_str = "X"
@@ -440,6 +443,10 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
     random = False
     shuffle_body = False
     
+    wall = None
+    elasticity = 1
+    all_wall_collide = True
+    
     nlaw = 2
     nmetric = 2
 
@@ -475,6 +482,22 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
             disp_trail = True
             if value != "":
                 disp_trail = get_bool(value, my_name)
+        
+        elif keyword == wall_str:
+            wall = get_vector_key_value(value, children_obj, my_name, variables)
+            if isinstance(wall, vector.Vector):
+                # have vector so that the box is wall dimensions, rather than 2*wall dimensions
+                wall = wall/2
+
+        elif keyword == elast_str:
+            tmp = parse.parse_maths_string(value, my_name, variables)
+            if tmp != None:
+                elasticity = tmp
+
+        elif keyword == wall_collide_str:
+            if value != "":
+                all_wall_collide = get_bool(value, my_name)
+
     
         elif keyword == nlaw_str:
             tmp = parse.parse_maths_string(value, my_name, variables)
@@ -538,6 +561,10 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
     uni.random = random
     uni.assertion = assertion
     uni.shuffle = shuffle_body
+
+    uni.wall = wall
+    uni.elasticity = elasticity
+    uni.all_wall_collide = all_wall_collide
 
     uni._nlaw = nlaw
     uni._nmetric = nmetric

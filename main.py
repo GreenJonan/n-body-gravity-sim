@@ -76,7 +76,7 @@ if screen == None:
 
 
 
-
+rnd.seed(constants.seed)
 universe.conform_body_speeds()
 
 
