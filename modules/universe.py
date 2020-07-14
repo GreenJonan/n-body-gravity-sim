@@ -26,8 +26,12 @@ class Universe:
         self.bodies = list(bodies)
         self.resistance = False
         self.max_id = len(bodies)
+        self.conserve_energy = False  #not implemented
+        
         self.centre = centre
-        self.conserve_energy = False
+        self.wall = None
+        self.elasticity = 1
+        self.all_wall_collide = True
         
         self.display_trails = False
         self.trail_id = -1
@@ -252,6 +256,12 @@ class Universe:
         :input:  Body object, and t - time step (h in above equations)
         :return: None, update body direction only
         """
+        #Updated maximum speed such that it is within bounds.
+        # NOTE::: This means that conservation of momentum no longer applies if max_speed > 1
+        # and non-relativistic.
+        obj.V = self.correct_velocity(obj.V, warning)
+        
+        
         #force = self.net_force(obj.id, obj.X, obj.V)
         #print("Inital Force:",force, obj.name)
 
@@ -287,19 +297,35 @@ class Universe:
         # see if body collides with other bodies
         collision, other_bodies = self.check_collision(obj, del_x)
 
-        if not collision:
-            obj.X = new_x
-        else:
+
+        if collision:
             self.multi_momentum_collision(obj, other_bodies, random=self.random)
-            """
-            if len(other_bodies) > 1:# and warning:
-                print("WARNING: Multiple bodies collided, untested feature.")
-            # current method for collision with multiple bodies,
-            # update the momentum collisions between every body.
+        else:
+            wall_collision, normal, updated_del_x = self.check_wall_collision(obj, del_x)
+            # updated_del_x is the del_x such that the object now lies on the wall.
             
-            for other_bod in other_bodies:
-                self.momentum_collision(obj, other_bod)
-            """
+            if wall_collision:
+                obj.X = obj.X + updated_del_x
+                self.wall_momentum_collision(obj, normal)
+            
+                # TO DO: apply multinary collision detection with other bodies and wall and so on etc.
+                """
+                # now move object again.
+                remainder = metrics.metric_norm(del_x, self._nmetric) - metrics.metric_norm(updated_del_x, self._nmetric)
+            
+                if remainder > dist_error:
+                    new_del_x = metrics.unit_vector(obj.V, self._nmetric) * remainder
+                    second_collision, other_bodies = self.check_collision(obj, new_del_x)
+        
+                    if second_collision:
+                        self.multi_momentum_collision(obj, other_bodies, random=self.random)
+                """
+                            
+            else:
+                obj.X = new_x
+        
+        
+        
         
         #print("Position:",obj.X, obj.X_prev, del_x)
         #print("Velocity:",obj.V, obj.V_prev, del_v)
@@ -783,7 +809,7 @@ class Universe:
 
 
 
-    def check_collision(self, bod:body.Body, del_x):
+    def check_collision(self, bod:body.Body, del_x:vector.Vector):
         """
         Check whether any objects collide.
         """
@@ -849,6 +875,102 @@ class Universe:
         #print(msg)
         return collided, results
 
+
+
+
+    def check_wall_collision(self, bod:body.Body, del_x:vector.Vector):
+        """
+        Given the new point a ball will be, find if it collides with the boundary wall/box.
+        Return whether collision occured, the normal vector to the wall, and the new_delta_x value.
+        
+        new_delta_x is the delta_x such that when updated, the body lies touching the wall.
+        """
+        collision = False
+        vec = None
+        new_del_x = None
+
+        if self.wall == None:
+            pass
+        elif bod.can_collide or self.all_wall_collide:
+            
+            n = len(self.wall)
+            vec_components = [0] * n
+            r = bod.radius
+            
+            new_x = bod.X + del_x
+            component_length = 1
+            new_component_length = 1
+
+            i = 0
+            while i < n:
+                xi = new_x.components[i]
+                abs_wall = abs(self.wall.components[i])
+                
+                xi_distance = abs_wall - r - abs(xi)
+                
+                if xi_distance >= 0:
+                    pass # no collision
+                else:
+                    component_length = abs(del_x.components[i])
+                    new_component_length = component_length + xi_distance
+
+                    # collision occured, update normal vector.
+                    collision = True
+                    if xi >= 0:
+                        vec_components[i] = -1
+                    else:
+                        vec_components[i] = 1
+                i += 1
+                    
+            tmp_vec = vector.Vector(vec_components)
+            vec = metrics.unit_vector(tmp_vec, self._nmetric)
+            
+            if collision:
+                if component_length == 0:
+                    new_del_x = vector.Vector.zero_vector(n)
+                else:
+                    new_del_x = (new_component_length / component_length) * del_x
+
+        return collision, vec, new_del_x
+
+
+
+    def wall_momentum_collision(self, bod:body.Body, wall_normal:vector.Vector):
+        """
+        Compute new momentum using the equations for body-body momentum collision.
+        However, let mass of wall -> infinity and initial velocity be zero.
+        
+        This gives, if A == bod, and B == Wall
+        
+        vA = ub + r*(uB-uA) =   -r*uA
+        vB = ub = 0
+        """
+        # let wall_normal be a unit vector
+
+        # vector decomposition.
+        projA = vector.Vector.inner_product(bod.V, wall_normal)
+            
+        vA_normal = projA * wall_normal
+        vA_plane = bod.V - vA_normal
+
+        # main calculation:
+        uA = sign(projA) * metrics.metric_norm(vA_normal, self._nmetric)
+
+            
+        r = self.get_wall_restitution_coefficient(bod)
+        vA = -r*uA
+        
+        new_vA_normal = vA * wall_normal
+        VA = new_vA_normal + vA_plane
+
+        bod.V = VA
+        return
+
+    def get_wall_restitution_coefficient(self, bod:body.Body):
+        """
+        Get coefficient of restitution given elasticity.
+        """
+        return math.sqrt(self.elasticity * bod.elasticity)
 
 
 

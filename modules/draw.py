@@ -392,7 +392,32 @@ class UniverseScreen:
         This is done by calling draw_2dprojection_body object for each body object.
         """
         
-        self.screen.fill(self.colour)
+        if U.wall != None:
+            self.screen.fill(col.rgb_inverse(self.colour))
+            
+            #rt ==> top tight
+            xrt = self.get_x_pix(U.wall)
+            yrt = self.get_y_pix(U.wall)
+        
+            other_side = -U.wall
+            #lb ==> bottom left
+            xlb = self.get_x_pix(other_side)
+            ylb = self.get_y_pix(other_side)
+        
+            w,h = self.dims
+            if xrt > w:
+                xrt = w
+            if yrt < 0:
+                yrt = 0
+            if xlb < 0:
+                xlb = 0
+            if ylb > h:
+                ylb = h
+
+            pygame.draw.polygon(self.screen, self.colour, [(xlb,ylb),(xlb,yrt),(xrt,yrt),(xrt,ylb)])
+        
+        else:
+            self.screen.fill(self.colour)
         
         self.draw_trails(U)
         
