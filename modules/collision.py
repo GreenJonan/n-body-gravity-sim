@@ -55,7 +55,7 @@ def n_sphere_collide(centreA, radiusA, centreB, radiusB, nmetric=2):
                     corner_ls[i] = corner_ls[i] - radiusA
                     corner_vec = vector.Vector(corner_ls)
                     
-                    collision = metrics.general_n_euclid_metric(corner_ls, centreB, nmetric) < radiusB
+                    collision = metrics.general_n_euclid_metric(corner_vec, centreB, nmetric) < radiusB
                     cont = not collision
                         
                     corner_ls[i] = corner_ls[i] + radiusA
