@@ -107,6 +107,10 @@ def metric_norm(v:Vec, N):
 
 
 
+def metric_inner_product(v1:Vec, v2:Vec, metric=2):
+    return Vec.inner_product(v1,v2)
+
+
 ##### Physical laws
 
 def inverse_square_law(v1:Vec, v2:Vec, dist_error):

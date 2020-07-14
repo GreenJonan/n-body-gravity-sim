@@ -288,22 +288,18 @@ class Universe:
         del_x = (t/6) * (kx1 + 2*kx2 + 2*kx3 + kx4)
         
         new_v = obj.V + del_v
-        new_x = obj.X + del_x
         new_v = self.correct_velocity(new_v, warning)
 
-        # Update Position and Velocity Vectors
-        #obj.X_prev = obj.X
-        #obj.V_prev = obj.V
-        
         obj.V = new_v
-        # note should velocity be updated if it previously collided
+
         
         # see if body collides with other bodies
-        collision, other_bodies = self.check_collision(obj, del_x)
-
+        collision, other_bodies, del_x = self.check_collision(obj, del_x)
+        update = True
 
         if collision:
             self.multi_momentum_collision(obj, other_bodies, random=self.random)
+        
         else:
             wall_collision, normal, updated_del_x = self.check_wall_collision(obj, del_x)
             # updated_del_x is the del_x such that the object now lies on the wall.
@@ -311,6 +307,8 @@ class Universe:
             if wall_collision:
                 obj.X = obj.X + updated_del_x
                 self.wall_momentum_collision(obj, normal)
+                
+                update = False
             
                 # TO DO: apply multinary collision detection with other bodies and wall and so on etc.
                 """
@@ -325,8 +323,8 @@ class Universe:
                         self.multi_momentum_collision(obj, other_bodies, random=self.random)
                 """
                             
-            else:
-                obj.X = new_x
+        if update:
+            obj.X = obj.X + del_x
         
         
         
@@ -463,7 +461,7 @@ class Universe:
         else:
             v_sqr = 0
             if self._nmetric == 2:
-                v_sqr = vector.Vector.inner_product(v,v)
+                v_sqr = metrics.metric_inner_product(v,v, self._nmetric)
             else:
                 v_sqr = metrics.metric_norm(v,self._nmetric) ** 2
             
@@ -488,7 +486,7 @@ class Universe:
             
             if self._nmetric != 2 and not warning:
                 print("Warning: Inner product is ill defined for other non-euclidean metrics.")
-            force = force - vector.Vector.inner_product(V,force)*V / (c_sqr)
+            force = force - metrics.metic_inner_product(V,force, self._nmetric) *V / (c_sqr)
         return force/mass
 
 
@@ -615,8 +613,8 @@ class Universe:
             # this is the normal vector for the plane of intersection.
 
             # vector decomposition.
-            projA = vector.Vector.inner_product(bodA.V, A_to_B_unit)
-            projB = vector.Vector.inner_product(bodB.V, A_to_B_unit)
+            projA = metrics.metric_inner_product(bodA.V, A_to_B_unit, self._nmetric)
+            projB = metrics.metric_inner_product(bodB.V, A_to_B_unit, self._nmetric)
             vA_normal = projA * A_to_B_unit
             vB_normal = projB * A_to_B_unit
 
@@ -644,18 +642,26 @@ class Universe:
 
             # this is the maximum error allowed in terms of the ratio of the momenta before to after
             err = 6e-16
-            """
-            len_va = vector.Vector.inner_product(VA, VA)
+            
+            len_va = metrics.metric_inner_product(VA, VA, self._nmetric)
             if len_va > 0:
-                projab = vector.Vector.inner_product(VA, VB) / len_va
+                projab = metrics.metric_inner_product(VA, VB, self._nmetric) / len_va
                 if projab < 0:
-                    proja_dist = vector.Vector.inner_product(VA,A_to_B_unit)
+                    proja_dist = metrics.metric_inner_product(VA,A_to_B_unit)
                     if proja_dist > 0:
-                        print(bodA.get_name(), VA, new_vA_normal, vA_plane)
-                        print(bodB.get_name(), VB, new_vB_normal, vB_plane)
-                        print()
-            """
+                        #print(bodA.get_name(), VA, new_vA_normal, vA_plane)
+                        #print(bodB.get_name(), VB, new_vB_normal, vB_plane)
+                        #print(bodA.get_name(), uA, vA)
+                        #print(VA, new_vA_normal)
+                        #print(bodB.get_name(), uB, vB)
+                        #print(VB, new_vA_normal)
+                        #print()
+                        pass
+            
+            #if VA == bodA.V and VB == bodB.V:
+                #print("here")
 
+            """
             if self.assertion:
                 momenta_inital = mA*bodA.V + mB*bodB.V
                 momenta_final  = mA*VA + mB*VB
@@ -687,6 +693,7 @@ class Universe:
                                       .format(ratio, delta_norm)
 
                         assert ratio <= err, warning_str + "\n\n" + momenta_str + "\n\n" + momentaA_str + "\n\n" + momentaB_str
+            """
             
             return VA,VB
 
@@ -833,62 +840,95 @@ class Universe:
         min_length = -1
         results = []
         
+        new_delta_x = del_x
         msg = ""
         
-        for other_body in self.bodies:
-            collision = False
+        if bod.can_collide:
+            del_x_len = metrics.metric_norm(del_x, self._nmetric)
+            del_x_unit = None
+        
+            if del_x_len <= 0:
+                # if del_x is a zero vector, then checking for collision is the same as colliding,
+                # for both cases the object doesn't move.
+                pass
+            else:
+                
+                del_x_unit = del_x / del_x_len
+        
+                for other_body in self.bodies:
+                    collision = False
             
-            if isinstance(other_body, body.Body):
-                if other_body.id != bod.id:
-                    if other_body.can_collide and bod.can_collide:
+                    if isinstance(other_body, body.Body):
+                        if other_body.id != bod.id:
+                            if other_body.can_collide:
                 
-                        # see if the two bodies will collide.
-                        # if so, change the positions & velocities.
+                                # see if the two bodies will collide.
+                                # if so, change the positions & velocities.
                 
-                        # collision can only occur if the object is travelling towards 'other_body'
-                        # diff means difference.
-                        # can't tell whether moving towards or away, so treat all cases equally
-                
-                        # consider del_x, moving to if ||del_x|| <= d(x1,x2)
-                
-                        # multiple collisions may occur, find the one such that the other_body has the
-                        # shortest distance from the bod, this means it will collide first.
+                                # collision can occur if objects are stuck inside one another initially
+                                collision = Collide.n_sphere_collide(bod.X, bod.radius, other_body.X,
+                                                                     other_body.radius, self._nmetric)
+                                                             
+                                # variable defintion.
+                                moving_towards_projection = 0
+                                
+                                if not collision:
+                                    # collision can only occur if the object is travelling towards 'other_body'
+                                    # this occurs when the two projected onto each other are the same.
                         
-                        
-                        # distance between other_body and bod
-                        d_original = metrics.general_n_euclid_metric(bod.X, other_body.X, self._nmetric)
-                        
-                        
-                        if not collided or d_original <= min_length:
+                                    difference = other_body.X - bod.X
+                                    moving_towards_projection = metrics.metric_inner_product(difference,
+                                                                                             del_x_unit,
+                                                                                             self._nmetric)
                             
-                            d_new = metrics.metric_norm(del_x, self._nmetric)
-                        
-                            tmp_del_x = del_x
-                            if d_original < d_new:
-                                tmp_del_x = tmp_del_x * (d_original/d_new)
-
-                            # now check if collision occurs,
-                            new_x = bod.X + tmp_del_x
-                            collision = Collide.n_sphere_collide(new_x, bod.radius, other_body.X,
-                                                                   other_body.radius, self._nmetric)
-
-                        if collision:
+                                    if moving_towards_projection > 0:
+                                
+                                        #check whether further away than previous collided object
+                                        if not collided or moving_towards_projection <= min_length:
                             
-                            if d_original < min_length or not collided:
-                                msg = ""
-                                min_length = d_original
-                                results = [other_body]
-                            else:
-                                msg += ", and "
-                                # this means the object has collided with multiple bodies, same distance away
-                                results.append(other_body)
+                                            # if bod is moving towards other_body the projection is positive.
+                                            # if the projection is zero, then moving counter clockwise.
+                                            
+                                            # if the projection is greater than del_x, then bod is moving towards
+                                            # other body but hasn't hit it.
+                                            # otherwise, del_x causes bod to move past other_body
+                                            # Hence, adjust the length to be the projection.
+                                
+                                            tmp_del_x = del_x
+                                
+                                            if moving_towards_projection < del_x_len:
+                                                # adjust del_x
+                                                tmp_del_x = del_x_unit * moving_towards_projection
+                                            else:
+                                                pass
+                        
+                                            new_x = bod.X + tmp_del_x
+                                            collision = Collide.n_sphere_collide(new_x, bod.radius, other_body.X,
+                                                                                 other_body.radius, self._nmetric)
 
-                            msg += bod.name + " collided with " +  other_body.name
-                            if not collided:
-                                collided = True
+                                            #if collision:
+                                            #    del_x = tmp_del_x
+                        
+                                    else:
+                                        pass
+                            
+                                if collision:
+                            
+                                    if moving_towards_projection < min_length or not collided:
+                                        #msg = ""
+                                        min_length = moving_towards_projection
+                                        results = [other_body]
+                                    else:
+                                        #msg += ", and "
+                                        # this means the object has collided with multiple bodies
+                                        results.append(other_body)
 
+                                    #msg += bod.name + " collided with " +  other_body.name
+                                    if not collided:
+                                        collided = True
+                                        new_delta_x = vector.Vector.zero_vector(len(del_x))
         #print(msg)
-        return collided, results
+        return collided, results, new_delta_x
 
 
 
@@ -963,7 +1003,7 @@ class Universe:
         # let wall_normal be a unit vector
 
         # vector decomposition.
-        projA = vector.Vector.inner_product(bod.V, wall_normal)
+        projA = metrics.metric_inner_product(bod.V, wall_normal, self._nmetric)
             
         vA_normal = projA * wall_normal
         vA_plane = bod.V - vA_normal
