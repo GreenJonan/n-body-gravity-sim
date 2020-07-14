@@ -7,6 +7,8 @@ from modules import universe
 from modules import vector
 from modules import colour
 
+import math
+
 
 #keywords
 
@@ -45,6 +47,9 @@ shuffle_str = "shuffleBody"
 
 wall_str = "boxDimensions"
 wall_collide_str = "wallCollision"
+
+control_str = "control"
+control_scale_str = "controlScale"
 
 
 # body
@@ -367,6 +372,12 @@ def parse_constants(strings:list, parent_name:str, variables:dict):
             if tmp != None:
                 consts.seed = tmp
 
+        elif name == control_scale_str:
+            tmp = parse.parse_maths_string(value, my_name, variables)
+            if tmp != None:
+                consts.control_scale = tmp
+
+
         elif name == '':
             line_eqs = parse.parse_key_values(value, parent_name, sep="=", num=1)[0]
             # this should be length 1
@@ -447,6 +458,8 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
     elasticity = 1
     all_wall_collide = True
     
+    can_control = False
+    
     nlaw = 2
     nmetric = 2
 
@@ -497,6 +510,11 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
         elif keyword == wall_collide_str:
             if value != "":
                 all_wall_collide = get_bool(value, my_name)
+        
+        elif keyword == control_str:
+            can_control = True
+            if value != "":
+                can_control = get_bool(value, my_name)
 
     
         elif keyword == nlaw_str:
@@ -565,6 +583,8 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
     uni.wall = wall
     uni.elasticity = elasticity
     uni.all_wall_collide = all_wall_collide
+
+    uni.can_control = can_control
 
     uni._nlaw = nlaw
     uni._nmetric = nmetric

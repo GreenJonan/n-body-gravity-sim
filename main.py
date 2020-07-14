@@ -3,6 +3,8 @@ from modules import colour
 
 import sys
 import random as rnd
+import math
+
 import pygame
 pygame.init()
 pygame.font.init()
@@ -78,7 +80,7 @@ if screen == None:
 
 rnd.seed(constants.seed)
 universe.conform_body_speeds()
-
+dimension = len(universe.centre)
 
 
 if screen.scale < 0:
@@ -212,6 +214,11 @@ start_screen = True
 paused = False
 
 help = False
+control = False
+
+vector_line = False
+object = None
+
 
 
 run = True
@@ -258,6 +265,41 @@ while run:
                 elif event.key == pygame.K_h:
                     print("TODO: help message")
 
+                elif event.key == pygame.K_c:
+                    if universe.can_control:
+                        control = not control
+
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            x,y = event.pos
+            
+            if event.button == 1:
+                
+                if control:
+                    object = screen.get_body_at_point((x,y), universe)
+                    if object != None:
+                        vector_line = True
+
+        elif event.type == pygame.MOUSEBUTTONUP:
+            x,y = event.pos
+            
+            if event.button == 1:
+                if vector_line:
+                    vector_line = False
+                
+                    x0,y0 = screen.get_x_pix(object.X), screen.get_y_pix(object.X)
+                    delta_x = screen.get_delta_pos_vector((x0,y0),(x,y), dimension)
+                
+                    momenta = delta_x * constants.control_scale
+                    if object.mass != 0:
+    
+                        momenta = momenta * (constants.max_dist/object.mass)
+                    object.V = momenta
+                
+                    object = None
+                    control = False
+    
+
+
 
     ###  draw functions
 
@@ -265,46 +307,34 @@ while run:
     screen.draw_2dprojection_universe(universe)
     screen.draw_tracking_label(universe)
 
-
-    ###  Update functions
-
     if not start_screen and not paused:
-        #earth = universe.bodies[2]
-        
-        i = 0
-        while i < constants.update_number:
-            universe.update_all_bodies(constants.time_step / constants.update_number,
-                                       phys_consts, constants.distance_error, constants.warning)
+        if control:
+            screen.write_label("CONTROL", colour.rgb_inverse(screen.colour), True, (True,False))
             
-            """
-            pass_start = earth.X.components[1] >= 0 >= earth.X_prev.components[1]\
-                and earth.X.components[0] > 0
-            if pass_start:
-                loops += 1
-            """
-            """
-            print()
-            for body in universe.bodies:
-                print(body.name, body.X)
-            """
-            i += 1
+            x,y = pygame.mouse.get_pos()
+            if vector_line:
+                if object != None:
+                    x0,y0 = screen.get_x_pix(object.X), screen.get_y_pix(object.X)
+                    pygame.draw.line(screen.screen, colour.rgb_inverse(screen.colour), (x0,y0), (x,y),5)
+
+        else:
+            ###  Update functions
+        
+            i = 0
+            while i < constants.update_number:
+                universe.update_all_bodies(constants.time_step / constants.update_number,
+                                           phys_consts, constants.distance_error, constants.warning)
+                i += 1
 
         
     elif paused:
-        #uni_screen.write_message("Paused", text_size, centre=True,
-        #                         text_colour=colour.white, background_colour=None)
-
-        screen.write_label("Paused", colour.rgb_inverse(screen.colour), True, True)
+        screen.write_label("Paused", colour.rgb_inverse(screen.colour), True, (True,True))
     else:
         screen.write_title_message("Press SPACE to begin")
-        #uni_screen.write_message("Press SPACE to begin", text_size, centre=True)
-
 
     pygame.display.update()
     pygame.time.delay(constants.time_delay)
 
-
-#print("Loops:", loops)
 
 pygame.quit()
 pygame.font.quit()

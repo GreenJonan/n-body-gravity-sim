@@ -71,6 +71,9 @@ class Constants:
     
         self.seed = time.time()
     
+        self.control_scale = 1
+    
+    
 
     def __repr__(self):
         string = "constants {{\nG: {0}\nE: {1}\nR: {2}\ndistanceError: {3}\ntimeDelay: {4}\nupdateNumber: {5}\ntimeStep: {6}\nmaxDistance: {7}\n}}"\

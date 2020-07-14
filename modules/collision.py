@@ -2,6 +2,16 @@ from modules import metrics, vector
 import math
 
 
+
+def particle_circle_collide(centreA, radius, point):
+    """
+    Assume all the measurements are in pixels. Return if point collides with circle A
+    """
+
+    return (centreA[0] - point[0])**2 + (centreA[1] - point[1])**2 <= radius**2
+
+
+
 def n_sphere_collide(centreA, radiusA, centreB, radiusB, nmetric=2):
     """
     Find whether two spheres intersect.

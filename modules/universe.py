@@ -47,6 +47,10 @@ class Universe:
         self.random = False
         self.shuffle = False
     
+        self.can_control = False
+    
+    
+    
     def __repr__(self):
         body_str = ""
         for bod in self.bodies:
@@ -640,6 +644,17 @@ class Universe:
 
             # this is the maximum error allowed in terms of the ratio of the momenta before to after
             err = 6e-16
+            """
+            len_va = vector.Vector.inner_product(VA, VA)
+            if len_va > 0:
+                projab = vector.Vector.inner_product(VA, VB) / len_va
+                if projab < 0:
+                    proja_dist = vector.Vector.inner_product(VA,A_to_B_unit)
+                    if proja_dist > 0:
+                        print(bodA.get_name(), VA, new_vA_normal, vA_plane)
+                        print(bodB.get_name(), VB, new_vB_normal, vB_plane)
+                        print()
+            """
 
             if self.assertion:
                 momenta_inital = mA*bodA.V + mB*bodB.V

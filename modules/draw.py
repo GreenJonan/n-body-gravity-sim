@@ -53,7 +53,7 @@ class UniverseScreen:
         self.updated_default_centre = False
     
         # update the screen to say 'loading'
-        self.write_label("Loading...", col.rgb_inverse(self.colour), True, True)
+        self.write_label("Loading...", col.rgb_inverse(self.colour), True, (True,True))
         pygame.display.update()
     
     
@@ -71,6 +71,29 @@ class UniverseScreen:
         scale is: scale unit = 1 pixel. Hence pixels = vals / scale
         """
         return int (x/self.scale)
+    
+    
+    
+    def get_body_at_point(self, point:tuple, U:u.Universe):
+        """
+        Given a point x,y in pixels, find the last body such that it intersects with this point.
+        This means it is in the same order as the drawing of the objects on the screen.
+        """
+        result = None
+    
+        n = len(U.bodies)
+        i = 0
+        while i < n:
+            body = U.bodies[i]
+            if isinstance(body, b.Body):
+                x_pix = self.get_x_pix(body.X)
+                y_pix = self.get_y_pix(body.X)
+                r = math.ceil(body.radius / self.scale)
+            
+                if collision.particle_circle_collide((x_pix,y_pix), r, point):
+                    result = body
+            i += 1
+        return result
     
     
     
@@ -503,7 +526,7 @@ class UniverseScreen:
         return text_screen
 
 
-    def write_message(self, text:str, font_size:int=12, centre=True,
+    def write_message(self, text:str, font_size:int=12, centre=(True,True),
                       text_colour:tuple=col.black, background_colour=None):
         
         text_screen = self.message(text, font_size, text_colour, background_colour)
@@ -512,15 +535,17 @@ class UniverseScreen:
         text_height = text_screen.get_height()
         
         x,y = 0,0
-        if centre:
+        centre_x, centre_y = centre
+        if centre_x:
             x = int(self.screen_centre[0] - (text_width/2))
+        if centre_y:
             y = int(self.screen_centre[1] - (text_height/2))
         
         self.screen.blit(text_screen, (x,y))
 
 
 
-    def write_label(self, text:str, colour=None, titleSize=False, centre=False):
+    def write_label(self, text:str, colour=None, titleSize=False, centre=(False,False)):
         size = self.label_size
         if titleSize:
             size = self.title_size
@@ -536,8 +561,57 @@ class UniverseScreen:
         if background:
             back_colour = col.rgb_inverse(self.text_colour)
 
-        self.write_message(text, font_size=self.title_size, centre=True, text_colour=self.text_colour,
+        self.write_message(text, font_size=self.title_size, centre=(True,True), text_colour=self.text_colour,
                            background_colour=back_colour)
+
+
+
+
+    ####### Pixels to vectors/points
+    def get_x_pos(self, x):
+        """
+        pixel = x_pos /scale ==> x_pos = pixel*scale
+        Centre has been shifted by centre[0]
+        """
+        relative_x = x - self.screen_centre[0]
+        return relative_x*self.scale + self.centre[0]
+
+    def get_y_pos(self, y):
+        """
+        pixel = y_pos /scale ==> y_pos = pixel*scale
+        """
+        relative_y = -y - self.screen_centre[1]
+        return relative_y*self.scale + self.centre[1]
+
+
+    def get_pos_vector(self, pos, n):
+        # n is the dimension of the vector
+        x,y = pos
+        
+        vec = [0]*n
+        x_pos = self.get_x_pos(x)
+        y_pos = self.get_y_pos(y)
+
+        vec[self.proj[0]] = x_pos
+        vec[self.proj[1]] = y_pos
+
+        return v.Vector(vec)
+
+
+    def get_delta_pos_vector(self, pos1, pos2, n):
+        x1,y1 = pos1
+        x2,y2 = pos2
+
+        vec = [0]*n
+        x_pos1 = self.get_x_pos(x1)
+        y_pos1 = self.get_y_pos(y1)
+        x_pos2 = self.get_x_pos(x2)
+        y_pos2 = self.get_y_pos(y2)
+        
+        vec[self.proj[0]] = x_pos2 - x_pos1
+        vec[self.proj[1]] = y_pos2 - y_pos1
+
+        return v.Vector(vec)
 
 
 
