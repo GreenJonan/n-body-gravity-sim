@@ -103,6 +103,7 @@ An alterante method is to update the velocity of B,C using conservation of momen
  - 't' to enable and disable trails. 
  - 'c' to dynamically adjust the momenta of bodies.
  - 'p' to pan the camera around, left click and drag.
+ - 'h' to bring up the help menu.
 
 
 
