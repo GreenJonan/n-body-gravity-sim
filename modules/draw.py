@@ -221,10 +221,11 @@ class UniverseScreen:
         """
 
         if self.track_id == U.max_id:
-            pass
+            return False
         else:
             new_track = self.track_id +1
             self.update_tracking(U, new_track)
+            return True
 
 
     def track_prev_object(self, U:u.Universe):
@@ -233,10 +234,11 @@ class UniverseScreen:
         """
 
         if self.track_id < 0:
-            pass
+            return False
         else:
             new_track = self.track_id -1
             self.update_tracking(U, new_track)
+            return True
 
 
 
@@ -551,14 +553,21 @@ class UniverseScreen:
 
 
     def write_message(self, text:str, font_size:int=12, centre=(True,True),
-                      text_colour:tuple=col.black, background_colour=None):
+                      text_colour:tuple=col.black, background_colour=None, second_size=None, offset=(0,0)):
         
         phrases = text.split("\n")
+        
         
         tmp_screen = self.message("", font_size, text_colour, None)
         template_height = tmp_screen.get_height()
         
-        total_height = len(phrases) * template_height
+        total_height = template_height + offset[1]
+        
+        if second_size != None:
+            tmp_screen = self.message("", second_size, text_colour, None)
+            template_height = tmp_screen.get_height()
+        
+        total_height += template_height * (len(phrases)-1)
         
         screen_x, screen_y = self.screen_centre
         centre_x, centre_y = centre
@@ -567,41 +576,54 @@ class UniverseScreen:
         if centre_y:
             y = int(screen_y - total_height/2)
         
-        for phrase in phrases:
+        i = 0
+        while i < len(phrases):
+            phrase = phrases[i]
+            
             text_screen = self.message(phrase, font_size, text_colour, background_colour)
 
             text_width = text_screen.get_width()
             text_height = text_screen.get_height()
         
-            x=0
+            x=offset[0]
             if centre_x:
                 x += int(screen_x - (text_width/2))
             
 
             self.screen.blit(text_screen, (x,y))
             y += int(text_height)
+
+            if i == 0:
+                if second_size != None:
+                    font_size = second_size
+            i += 1
         return
 
 
 
-    def write_label(self, text:str, colour=None, titleSize=False, centre=(False,False)):
-        size = self.label_size
-        if titleSize:
-            size = self.title_size
+    def write_label(self, text:str, colour=None, titleSize=False, centre=(False,False), size=-1, offset=(0,0)):
+        textsize = self.label_size
+        second_size = None
         
+        if size > 0:
+            second_size = size
+        if titleSize:
+            textsize = self.title_size
+    
         if colour == None:
             colour = self.text_colour
-        self.write_message(text, size, centre=centre, text_colour=colour,
-                           background_colour=self.colour)
+        
+        self.write_message(text, textsize, centre=centre, text_colour=colour,
+                           background_colour=self.colour, second_size=second_size, offset=offset)
 
 
-    def write_title_message(self, text:str, background=True):
+    def write_title_message(self, text:str, background=True, offset=(0,0)):
         back_colour = None
         if background:
             back_colour = col.rgb_inverse(self.text_colour)
 
         self.write_message(text, font_size=self.title_size, centre=(True,True), text_colour=self.text_colour,
-                           background_colour=back_colour)
+                           background_colour=back_colour, offset=offset)
 
 
 

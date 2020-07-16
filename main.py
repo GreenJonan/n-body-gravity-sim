@@ -192,6 +192,7 @@ if set_up_error:
 
 phys_consts = (constants.G, constants.E, constants.R)
 
+help_comment = "Help:\n\nPress h to open/close help message.\n\nPress Spacebar to pause/unpause\n\nPress 'p' to pan the camera by clicking and dragging the screen.\n\nUse arrow keys to zoom/focus on a body.\n\nPress 'return' to restore default pan/zoom.\n\nPress 'z' to show zoom levels.\n\nPress 't' to activate/deactivate Trails if given in systems file.\n\nPress 'c' to control objects if given in systems file."
 
 
 error = False
@@ -211,143 +212,173 @@ x_prev,y_prev = 0,0
 prev_offset = 0,0
 clicked = False
 
+wait = False
+
 
 run = True
 while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-        
-        elif event.type == pygame.KEYDOWN:
-            if start_screen:
-                if event.key == pygame.K_SPACE:
-                    start_screen = False
-            else:
-                if event.key == pygame.K_SPACE:
-                    paused = not paused
+    
+        elif not error:
+            if event.type == pygame.KEYDOWN:
+                if start_screen:
+                    if event.key == pygame.K_SPACE:
+                        start_screen = False
+                        wait = False
+                elif help:
+                    if event.key == pygame.K_h:
+                        help = False
+                        wait = False
                 
-                    if control:
-                        # Reset control selection.
-                        object = None
-                        vector_line = False
-                    #if pan:
-                        #pan = False
+                else:
+                    if event.key == pygame.K_SPACE:
+                        paused = not paused
+                        wait = False
+                
+                        if control:
+                            # Reset control selection.
+                            object = None
+                            vector_line = False
             
 
-                elif event.key == pygame.K_RIGHT:
-                    screen.track_next_object(universe)
-                elif event.key == pygame.K_LEFT:
-                    screen.track_prev_object(universe)
+                    elif event.key == pygame.K_RIGHT:
+                        wait = not screen.track_next_object(universe)
+                    
+                    elif event.key == pygame.K_LEFT:
+                        wait = not screen.track_prev_object(universe)
 
-                elif event.key == pygame.K_UP:
-                    if not (clicked and pan):
-                        screen.scale = screen.scale / 2
-                        x_off,y_off = screen.offset
-                        screen.offset = (int(x_off*2), int(y_off*2))
+                    elif event.key == pygame.K_UP:
+                        if not (clicked and pan):
+                            screen.scale = screen.scale / 2
+                            x_off,y_off = screen.offset
+                            screen.offset = (int(x_off*2), int(y_off*2))
+                            wait = False
 
-                elif event.key == pygame.K_DOWN:
-                    if not (clicked and pan):
-                        screen.scale = screen.scale * 2
-                        x_off,y_off = screen.offset
-                        screen.offset = (int(x_off/2), int(y_off/2))
+                    elif event.key == pygame.K_DOWN:
+                        if not (clicked and pan):
+                            screen.scale = screen.scale * 2
+                            x_off,y_off = screen.offset
+                            screen.offset = (int(x_off/2), int(y_off/2))
+                            wait = False
 
-                elif event.key == pygame.K_RETURN:
-                    screen.scale = screen.default_scale
-                    if pan:
-                        screen.offset = (0,0)
-
-                elif event.key == pygame.K_z:
-                    screen.show_zoom = not screen.show_zoom
-
-                elif event.key == pygame.K_w:
-                    if constants.warning_possible:
-                        constants.warning = not constants.warning
-                            
-                elif event.key == pygame.K_t:
-                    universe.display_trails = not universe.display_trails
-                        
-                    if universe.display_trails:
-                        universe.update_trail_track(screen.track_id)
-                    else:
-                        universe.clear_trails()
-
-                elif event.key == pygame.K_h:
-                    print("TODO: help message")
-
-                elif event.key == pygame.K_c:
-                    if universe.can_control and not paused:
-                        control = not control
+                    elif event.key == pygame.K_RETURN:
+                        screen.scale = screen.default_scale
                         if pan:
-                            pan = not pan
+                            screen.offset = (0,0)
+                        wait = False
 
-                elif event.key == pygame.K_p:
-                    #if paused:
-                    pan = not pan
-                    if control:
-                        control = not control
+                    elif event.key == pygame.K_z:
+                        screen.show_zoom = not screen.show_zoom
 
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            x,y = event.pos
+                    elif event.key == pygame.K_w:
+                        if constants.warning_possible:
+                            constants.warning = not constants.warning
+                            
+                    elif event.key == pygame.K_t:
+                        universe.display_trails = not universe.display_trails
+                        
+                        if universe.display_trails:
+                            universe.update_trail_track(screen.track_id)
+                        else:
+                            universe.clear_trails()
+
+                    elif event.key == pygame.K_h:
+                        help = True
+                        wait = False
+
+                    elif event.key == pygame.K_c:
+                        if universe.can_control and not paused:
+                            control = not control
+                            if pan:
+                                pan = not pan
+
+                    elif event.key == pygame.K_p:
+                        #if paused:
+                        pan = not pan
+                        if control:
+                            control = not control
+                        wait = False
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x,y = event.pos
             
-            if event.button == 1:
-                clicked = True
+                if event.button == 1:
+                    clicked = True
                 
-                if control and not paused:
-                    object = screen.get_body_at_point((x,y), universe)
-                    if object != None:
-                        vector_line = True
+                    if control and not paused:
+                        object = screen.get_body_at_point((x,y), universe)
+                        if object != None:
+                            vector_line = True
 
-                elif pan:
-                    x_prev,y_prev = x,y
-                    #prev_centre = screen.screen_centre
-                    prev_offset = screen.offset
+                    elif pan:
+                        x_prev,y_prev = x,y
+                        #prev_centre = screen.screen_centre
+                        prev_offset = screen.offset
 
 
-        elif event.type == pygame.MOUSEBUTTONUP:
-            x,y = event.pos
+            elif event.type == pygame.MOUSEBUTTONUP:
+                x,y = event.pos
             
-            if event.button == 1:
-                clicked = False
+                if event.button == 1:
+                    clicked = False
                 
-                if vector_line:
-                    vector_line = False
+                    if vector_line:
+                        vector_line = False
                 
-                    x0,y0 = screen.get_x_pix(object.X), screen.get_y_pix(object.X)
-                    delta_x = screen.get_delta_pos_vector((x0,y0),(x,y), dimension)
+                        x0,y0 = screen.get_x_pix(object.X), screen.get_y_pix(object.X)
+                        delta_x = screen.get_delta_pos_vector((x0,y0),(x,y), dimension)
                 
-                    momenta = delta_x * constants.control_scale
-                    if object.mass != 0:
-    
-                        momenta = momenta * (constants.max_dist/object.mass)
-                    object.V = momenta
+                        momenta = delta_x * constants.control_scale
+                        if object.mass != 0:
+                            momenta = momenta * (constants.max_dist/object.mass)
+                        object.V = momenta
                 
-                    object = None
-                    control = False
+                        object = None
+                        control = False
 
     
-        elif event.type == pygame.MOUSEMOTION:
-            if pan and clicked:
-                x,y = pygame.mouse.get_pos()
-                del_x = x - x_prev
-                del_y = y - y_prev
-                #print(del_x,del_y)
-                screen.offset = (del_x + prev_offset[0], del_y + prev_offset[1])
+            elif event.type == pygame.MOUSEMOTION:
+                if pan and clicked:
+                    x,y = pygame.mouse.get_pos()
+                    del_x = x - x_prev
+                    del_y = y - y_prev
+                    screen.offset = (del_x + prev_offset[0], del_y + prev_offset[1])
 
 
 
     ###  draw functions
 
-    try:
-        screen.update_origin_tracking(universe)
-        screen.draw_2dprojection_universe(universe, grid=pan)
-        screen.draw_tracking_label(universe)
-    except Exception as e:
-        error = True
-        error_name = str(e)
+    if not wait and not error:
+        try:
+            screen.update_origin_tracking(universe)
+            screen.draw_2dprojection_universe(universe, grid=pan)
+            screen.draw_tracking_label(universe)
+            pause_drawn = True
+        except Exception as e:
+            error = True
+            error_name = str(e)
 
-    if not error:
 
-        if not start_screen and not paused:
+    if not error and not wait:
+        if start_screen:
+            screen.write_title_message("Press SPACE to begin")
+            wait = True
+        
+        elif paused:
+            if pan:
+                screen.write_label("PAN CAMERA", colour.rgb_inverse(screen.colour), True, (True,False))
+            else:
+                screen.write_label("Paused", colour.rgb_inverse(screen.colour), True, (True,True))
+                wait = True
+
+        elif help:
+            wait = True
+            screen.write_label(help_comment, colour.rgb_inverse(screen.colour), True, (False,True),
+                               size=50, offset=(50,0))
+
+        else:
             if control:
                 screen.write_label("CONTROL", colour.rgb_inverse(screen.colour), True, (True,False))
             
@@ -371,17 +402,12 @@ while run:
                 except Exception as e:
                     error = True
                     error_name = str(e)
-        
-        elif paused:
-            if pan:
-                screen.write_label("PAN CAMERA", colour.rgb_inverse(screen.colour), True, (True,False))
-            else:
-                screen.write_label("Paused", colour.rgb_inverse(screen.colour), True, (True,True))
-        else:
-            screen.write_title_message("Press SPACE to begin")
+  
 
-    else:
+
+    if error and not wait:
         screen.write_title_message(error_name)
+        wait = True
 
     pygame.display.update()
     pygame.time.delay(constants.time_delay)
