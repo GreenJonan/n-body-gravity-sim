@@ -1,8 +1,16 @@
-#import body, colour, constants, draw, universe, vector
-from modules import body, colour, draw, universe, vector, constants
-from modules.parser import objects, special_parsers as pars
-import math
+from modules.parser import objects
+from modules.parser import special_parsers as pars
+#import objects, special_parsers as pars
 
+#from .. import body, colour, constants, draw, universe, vector
+from modules import body
+from modules import colour
+from modules import draw
+from modules import universe
+from modules import vector
+from modules import constants
+
+import math
 import sys
 
 directory = "systems/"

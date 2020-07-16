@@ -4,12 +4,11 @@ max_distance = 25000
 
 import pygame
 
-import modules.body as b,\
-    modules.universe as u,\
-    modules.vector as v,\
-    modules.constants as c,\
-    modules.colour as col
-
+import modules.body as b
+import modules.universe as u
+import modules.vector as v
+import modules.constants as c
+import modules.colour as col
 from modules import collision
 
 #import body as b, universe as u, vector as v, constants as c, colour as col
@@ -33,6 +32,8 @@ class UniverseScreen:
         
         self.dims = (width,height)
         self.screen = pygame.display.set_mode(self.dims)
+        pygame.display.set_caption("Simulation")
+        
         self.colour = colour
         self.default_scale = scale
         self.scale = scale

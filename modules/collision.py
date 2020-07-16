@@ -1,4 +1,5 @@
-from modules import metrics, vector
+from modules import metrics
+from modules import vector
 import math
 
 
