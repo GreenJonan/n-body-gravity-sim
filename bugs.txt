@@ -31,3 +31,13 @@ Objects that approach another object get flung out of their orbits. Error likely
 4).
 
 Set universal speed limit to zero. Objects appear to still be able to move. This error occurs due to the runge-kutta method and the fact that kxn is effectively velocity due to the force. However, the velocity cannot exceed 0, and kxn may be non-zero.
+
+
+5). 
+
+Major error: when two objects collide, which collision enabled, sometimes they get ‘stuck’ and continue to exchange momenta, however never leave until another object strikes them. Sometimes this other object gets stuck as well.
+Possible caused: {
+ - May be incorrectly calculating whether two objects collide during their trajectories.
+ - Program sees whether two objects have collided between updating their positions, however still update their velocities, then apply conservation of momenta.
+ - When two objects collide, they don’t move and their positions remain static.
+}
