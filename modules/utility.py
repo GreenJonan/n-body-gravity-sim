@@ -277,6 +277,8 @@ def run_load_window():
     top_num = 0
     screen_height = 0
     
+    update_screen = True
+    
     run = True
     while run:
         for event in pygame.event.get():
@@ -285,16 +287,17 @@ def run_load_window():
         
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_DOWN:
-                    
                     if file_num < n:
+                        update_screen = True
                         file_num += 1
                     
-                    if file_num != n:
-                        if file_num - top_num >= space-1:
-                            top_num += 1
+                        if file_num != n:
+                            if file_num - top_num >= space-1:
+                                top_num += 1
     
                 elif event.key == pygame.K_UP:
                     if file_num > 0:
+                        update_screen = True
                         file_num -= 1
                     
                         if file_num != 0:
@@ -302,6 +305,7 @@ def run_load_window():
                                 top_num -= 1
             
                 elif event.key == pygame.K_RETURN:
+                    update_screen = True
                     if file_num == 0:
                         # go up a directory
                         path = get_prev_dir(path)
@@ -328,56 +332,58 @@ def run_load_window():
                     top_num = 0
                     file_num = 0
                     
-                    
-        window.fill(colour.white)
-        n = len(files)
+        if update_screen:
+            window.fill(colour.white)
+            n = len(files)
                             
-        x, y = print_screen_text(window, "Folder:  " + folder_name,
-                                 pos=(offcentre[0],offcentre[1]+screen_height),size=title_size)
+            x, y = print_screen_text(window, "Folder:  " + folder_name,
+                                    pos=(offcentre[0],offcentre[1]+screen_height), size=title_size)
                                 
-        screen_height += y + gap + offcentre[1]
-        distance = height - screen_height
+            screen_height += y + gap + offcentre[1]
+            distance = height - screen_height
                                         
-        down_arrow = False
-        up_arrow = False
-                                                
-        i = 0
-        while i < min(space,n+1):
-            index = i + top_num
-                                                            
-            name = ""
-            text_colour = colour.black
-            if index == file_num:
-                text_colour = colour.red
-                                                                            
-            if index == 0:
-                name = "BACK"
-            else:
-                if index == top_num:
-                    up_arrow  = True
-                elif top_num+space-1 == index and index != n:
-                    down_arrow = True
+            down_arrow = False
+            up_arrow = False
+        
+            i = 0
+            while i < min(space,n+1):
+                index = i + top_num
+
+                name = ""
+                text_colour = colour.black
+                if index == file_num:
+                    text_colour = colour.red
+                
+                if index == 0:
+                    name = "BACK"
                 else:
-                    name = files[index-1]
-                                                                                                                            
-            if up_arrow:
-                draw_triangle(window, name_size, offset=(offcentre[0],screen_height), down=False)
-                up_arrow = False
-                screen_height += name_height
-            elif down_arrow:
-                draw_triangle(window, name_size, offset=(offcentre[0],screen_height), down=True)
-                down_arrow = False
-                screen_height += name_height
+                    if index == top_num:
+                        up_arrow  = True
+                    elif top_num+space-1 == index and index != n:
+                        down_arrow = True
+                    else:
+                        name = files[index-1]
+            
+                if up_arrow:
+                    draw_triangle(window, name_size, offset=(offcentre[0],screen_height), down=False)
+                    up_arrow = False
+                    screen_height += name_height
+                elif down_arrow:
+                    draw_triangle(window, name_size, offset=(offcentre[0],screen_height), down=True)
+                    down_arrow = False
+                    screen_height += name_height
 
-            else:
-                x, y = print_screen_text(window, name, pos=(offcentre[0],offcentre[1]+screen_height),
-                                         col=text_colour, size=name_size)
-                screen_height += y
+                else:
+                    x, y = print_screen_text(window, name, pos=(offcentre[0],offcentre[1]+screen_height),
+                                             col=text_colour, size=name_size)
+                    screen_height += y
 
-            i += 1
+                i += 1
 
-        pygame.display.update()
-        screen_height = 0
+            pygame.display.update()
+            screen_height = 0
+                
+            update_screen = False
     return file_name
 
 

@@ -22,10 +22,25 @@ DATA_FILES = ['modules/body.py',
               'modules/parser/parser.py',
               'modules/parser/special_parsers.py'
               ]
+
+info_str = "An N body gravity and momentum collision simulation. The program reads <file>.sys files and contructs a system of bodies. This is a custom file type that is a text file with specific formatting."
+
+p_list = {'CFBundleVersion': "1.0",
+    'CFBundleShortVersionString': "a1,0,0",
+        'CFBundleSpokenName': "N body Gravity and Collision Simulation",
+        'NSHumanReadableCopyright': "2020, Jonathan Skelton",
+        'CFBundleGetInfoString': info_str
+}
+
+
 OPTIONS = {
     'iconfile':'icon.icns',
-    'argv_emulation':True
+    'argv_emulation':True,
+    'packages':['pygame'],
+    'plist':p_list
 }
+
+
 
 setup(
     name = "GravitySimulation",

@@ -1,3 +1,19 @@
+"""
+Copyright 2020 Jonathan Skelton
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and 
+associated documentation files (the "Software"), to deal in the Software without restriction, 
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, 
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or 
+substantial portions of the Software.
+"""
+
+
+
+
 import pygame
 pygame.init()
 pygame.font.init()
@@ -41,10 +57,6 @@ def read_file(file_name=""):
 
 
 
-
-
-
-
 ##############################
 
 load_error = False
@@ -64,6 +76,8 @@ try:
         file_name = utility.run_load_window()
 
     if file_name == "":
+        pygame.quit()
+        pygame.font.quit()
         sys.exit(0)
     else:
         f = open(file_name, "r")
@@ -129,6 +143,8 @@ if not load_error:
 
 if load_error:
     utility.error_window(error_name)
+    pygame.quit()
+    pygame.font.quit()
     sys.exit(0)
 
 
@@ -180,6 +196,8 @@ except Exception as e:
 
 if set_up_error:
     utility.error_window(error_name)
+    pygame.quit()
+    pygame.font.quit()
     sys.exit(0)
 
 
@@ -192,7 +210,7 @@ if set_up_error:
 
 phys_consts = (constants.G, constants.E, constants.R)
 
-help_comment = "Help:\n\nPress h to open/close help message.\n\nPress Spacebar to pause/unpause\n\nPress 'p' to pan the camera by clicking and dragging the screen.\n\nUse arrow keys to zoom/focus on a body.\n\nPress 'return' to restore default pan/zoom.\n\nPress 'z' to show zoom levels.\n\nPress 't' to activate/deactivate Trails if given in systems file.\n\nPress 'c' to control objects if given in systems file."
+help_comment = "Help:\n\nPress h to open/close help message.\nPress Spacebar to pause/unpause\n\nPress 'p' to pan the camera by clicking and dragging the screen.\n\nUse arrow keys to zoom/focus on a body.\nress 'z' to show zoom levels.\nPress 'return' to restore default pan/zoom.\n\nPress 't' to activate/deactivate Trails if given in systems file.\n\nPress 'c' to control objects if given in systems file.\n\n\nSimulation by Jonathn Skelton, July 2020"
 
 
 error = False
@@ -364,17 +382,14 @@ while run:
     if not error and not wait:
         if start_screen:
             screen.write_title_message("Press SPACE to begin")
-            wait = True
-        
+
         elif paused:
             if pan:
                 screen.write_label("PAN CAMERA", colour.rgb_inverse(screen.colour), True, (True,False))
             else:
                 screen.write_label("Paused", colour.rgb_inverse(screen.colour), True, (True,True))
-                wait = True
 
         elif help:
-            wait = True
             screen.write_label(help_comment, colour.rgb_inverse(screen.colour), True, (False,True),
                                size=50, offset=(50,0))
 
@@ -402,15 +417,21 @@ while run:
                 except Exception as e:
                     error = True
                     error_name = str(e)
-  
 
 
     if error and not wait:
         screen.write_title_message(error_name)
         wait = True
 
-    pygame.display.update()
+    if not wait:
+        pygame.display.update()
+
+        if error or (paused and not pan) or start_screen or help:
+            wait = True
+
     pygame.time.delay(constants.time_delay)
+
+
 
 
 pygame.quit()
