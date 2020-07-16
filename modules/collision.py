@@ -135,6 +135,24 @@ def get_rectangle_circle_outline(corner_rec:tuple, dims:tuple, centre_circ:tuple
     Given a circle that is sufficiently far away from the screen and large enough that it still intersects,
     find the polygon points that represent an approximation.
     """
+    c_x,c_y = centre_circ
+    r_x,r_y = corner_rec
+    w,h = dims
+    
+    rx_max = r_x + w-1
+    rx_min = r_x
+    ry_max = r_y + h-1
+    ry_min = r_y
+    
+    rt_dist = (rx_max - c_x)**2 + (ry_max - c_y)**2
+    rb_dist = (rx_max - c_x)**2 + (ry_min - c_y)**2
+    lt_dist = (rx_min - c_x)**2 + (ry_max - c_y)**2
+    lb_dist = (rx_min - c_x)**2 + (ry_min - c_y)**2
+    r_sqr = radius**2
+    
+    if rt_dist <= r_sqr and rb_dist <= r_sqr and lt_dist <= r_sqr and lb_dist <= r_sqr:
+        # screen inside circle.
+        return (rx_min, ry_min), (rx_min, ry_max), (rx_max, ry_max), (rx_max, ry_min)
 
     return get_rectangle_circle_intersection_points(corner_rec, dims, centre_circ, radius)
 
@@ -282,7 +300,8 @@ def get_rectangle_circle_intersection_points(corner_rec:tuple, dims:tuple, centr
                 if not circle_left and not circle_above:
                     return bottom, right, (rx_max,ry_min)
                 else:
-                    return right, bottom, (rx_min,ry_max), (rx_max,ry_max)
+
+                    return right, bottom, (rx_min, ry_min),(rx_min,ry_max), (rx_max,ry_max)
 
             elif top_side and bottom_side:
                 top = get_point(points,2)

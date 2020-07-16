@@ -416,6 +416,10 @@ control = False
 vector_line = False
 object = None
 
+pan = False
+x_prev,y_prev = 0,0
+prev_offset = 0,0
+clicked = False
 
 
 run = True
@@ -431,6 +435,14 @@ while run:
             else:
                 if event.key == pygame.K_SPACE:
                     paused = not paused
+                
+                    if control:
+                        # Reset control selection.
+                        object = None
+                        vector_line = False
+                    #if pan:
+                        #pan = False
+            
 
                 elif event.key == pygame.K_RIGHT:
                     screen.track_next_object(universe)
@@ -438,11 +450,21 @@ while run:
                     screen.track_prev_object(universe)
 
                 elif event.key == pygame.K_UP:
-                    screen.scale = screen.scale / 2
+                    if not (clicked and pan):
+                        screen.scale = screen.scale / 2
+                        x_off,y_off = screen.offset
+                        screen.offset = (int(x_off*2), int(y_off*2))
+
                 elif event.key == pygame.K_DOWN:
-                    screen.scale = screen.scale * 2
+                    if not (clicked and pan):
+                        screen.scale = screen.scale * 2
+                        x_off,y_off = screen.offset
+                        screen.offset = (int(x_off/2), int(y_off/2))
+
                 elif event.key == pygame.K_RETURN:
                     screen.scale = screen.default_scale
+                    if pan:
+                        screen.offset = (0,0)
 
                 elif event.key == pygame.K_z:
                     screen.show_zoom = not screen.show_zoom
@@ -463,23 +485,40 @@ while run:
                     print("TODO: help message")
 
                 elif event.key == pygame.K_c:
-                    if universe.can_control:
+                    if universe.can_control and not paused:
+                        control = not control
+                        if pan:
+                            pan = not pan
+
+                elif event.key == pygame.K_p:
+                    #if paused:
+                    pan = not pan
+                    if control:
                         control = not control
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x,y = event.pos
             
             if event.button == 1:
+                clicked = True
                 
-                if control:
+                if control and not paused:
                     object = screen.get_body_at_point((x,y), universe)
                     if object != None:
                         vector_line = True
+
+                elif pan:
+                    x_prev,y_prev = x,y
+                    #prev_centre = screen.screen_centre
+                    prev_offset = screen.offset
+
 
         elif event.type == pygame.MOUSEBUTTONUP:
             x,y = event.pos
             
             if event.button == 1:
+                clicked = False
+                
                 if vector_line:
                     vector_line = False
                 
@@ -494,14 +533,22 @@ while run:
                 
                     object = None
                     control = False
+
     
+        elif event.type == pygame.MOUSEMOTION:
+            if pan and clicked:
+                x,y = pygame.mouse.get_pos()
+                del_x = x - x_prev
+                del_y = y - y_prev
+                #print(del_x,del_y)
+                screen.offset = (del_x + prev_offset[0], del_y + prev_offset[1])
 
 
 
     ###  draw functions
 
     screen.update_origin_tracking(universe)
-    screen.draw_2dprojection_universe(universe)
+    screen.draw_2dprojection_universe(universe, grid=pan)
     screen.draw_tracking_label(universe)
 
     if not start_screen and not paused:
@@ -525,7 +572,10 @@ while run:
 
         
     elif paused:
-        screen.write_label("Paused", colour.rgb_inverse(screen.colour), True, (True,True))
+        if pan:
+            screen.write_label("PAN CAMERA", colour.rgb_inverse(screen.colour), True, (True,False))
+        else:
+            screen.write_label("Paused", colour.rgb_inverse(screen.colour), True, (True,True))
     else:
         screen.write_title_message("Press SPACE to begin")
 

@@ -44,7 +44,8 @@ class UniverseScreen:
         self.title_size = title_size
         
         
-        self.screen_centre = (int(width/2), int(height/2))
+        self.screen_centre = self.default_centre()
+        self.offset = (0,0)
         self.track_id = -1
 
         self.centre = None
@@ -72,6 +73,12 @@ class UniverseScreen:
         scale is: scale unit = 1 pixel. Hence pixels = vals / scale
         """
         return int (x/self.scale)
+    
+    
+    
+    def default_centre(self):
+        return (int(self.dims[0]/2), int(self.dims[1]/2))
+    
     
     
     
@@ -317,13 +324,14 @@ class UniverseScreen:
         When the radius is too large, if not fill, represent the ball as a single pixel.
         """
         
+        # note that centre has already been adjusted based on the screen offset, so no need to include it here
+        
         x_px,y_px = centre
         on_screen = self.body_on_screen(centre, radius)
     
         if on_screen:
-            
-            del_x = x_px - self.screen_centre[0]
-            del_y = y_px - self.screen_centre[1]
+            del_x = x_px - self.screen_centre[0]# - self.offset[0]
+            del_y = y_px - self.screen_centre[1]# - self.offset[0]
             centre_diff = math.sqrt((del_x)**2 + (del_y)**2)
             
             far_away = centre_diff >= max_distance
@@ -380,11 +388,12 @@ class UniverseScreen:
     
     
     def get_x_pix(self, X):
+        #print(X)
         tmp_x = self.get_pixel(X.components[self.proj[0]] - self.centre[0])
-        return tmp_x + self.screen_centre[0]
+        return tmp_x + self.screen_centre[0] + self.offset[0]
     def get_y_pix(self, X):
         tmp_y = self.get_pixel(X.components[self.proj[1]] - self.centre[1])
-        return -tmp_y + self.screen_centre[1]
+        return -tmp_y + self.screen_centre[1] + self.offset[1]
     
     
     ####################################
@@ -399,18 +408,18 @@ class UniverseScreen:
         tmp_x = X.components[self.proj[0]] + Y.components[self.proj[0]]
         tmp_x = tmp_x - self.centre[0] # centre at current position of object.
         tmp_x = self.get_pixel(tmp_x)
-        return tmp_x + self.screen_centre[0]
+        return tmp_x + self.screen_centre[0] + self.offset[0]
     
     def get_y_pix_offset(self, X,Y):
         tmp_y = X.components[self.proj[1]] + Y.components[self.proj[1]]
         tmp_y = tmp_y - self.centre[1] # centre at current position of object.
         tmp_y = self.get_pixel(tmp_y)
-        return -tmp_y + self.screen_centre[1]
+        return -tmp_y + self.screen_centre[1] + self.offset[1]
 
 
     #####  UNIVERSE
 
-    def draw_2dprojection_universe(self, U:u.Universe):
+    def draw_2dprojection_universe(self, U:u.Universe, grid=False):
         """
         Given a universe object, draw all possible objects on the screen.
         This is done by calling draw_2dprojection_body object for each body object.
@@ -418,6 +427,12 @@ class UniverseScreen:
         
         if U.wall != None:
             self.screen.fill(col.rgb_inverse(self.colour))
+            
+            w,h = self.dims
+            x_min = self.offset[0]
+            y_min = self.offset[1]
+            x_max = x_min + w
+            y_max = y_min + h
             
             #rt ==> top tight
             xrt = self.get_x_pix(U.wall)
@@ -428,14 +443,14 @@ class UniverseScreen:
             xlb = self.get_x_pix(other_side)
             ylb = self.get_y_pix(other_side)
         
-            w,h = self.dims
-            if xrt > w:
+        
+            if xrt > x_max:
                 xrt = w
-            if yrt < 0:
+            if yrt < y_min:
                 yrt = 0
-            if xlb < 0:
+            if xlb < x_min:
                 xlb = 0
-            if ylb > h:
+            if ylb > y_max:
                 ylb = h
 
             pygame.draw.polygon(self.screen, self.colour, [(xlb,ylb),(xlb,yrt),(xrt,yrt),(xrt,ylb)])
@@ -448,6 +463,14 @@ class UniverseScreen:
         for body in U.bodies:
             if isinstance(body, b.Body):
                 self.draw_2dprojection_body(body)
+
+        if grid:
+            line_colour = col.rgb_inverse(self.colour)
+            centre = self.default_centre()
+            w,h = self.dims
+            
+            pygame.draw.line(self.screen, line_colour, (centre[0], 0),(centre[0], h-1), 2)
+            pygame.draw.line(self.screen, line_colour, (0, centre[1]),(w-1, centre[1]), 2)
 
 
 
@@ -574,14 +597,15 @@ class UniverseScreen:
         pixel = x_pos /scale ==> x_pos = pixel*scale
         Centre has been shifted by centre[0]
         """
-        relative_x = x - self.screen_centre[0]
+        relative_x = x# - self.screen_centre[0]# - self.offset[0]
+        # no need for secondary part since find difference.
         return relative_x*self.scale + self.centre[0]
 
     def get_y_pos(self, y):
         """
         pixel = y_pos /scale ==> y_pos = pixel*scale
         """
-        relative_y = -y - self.screen_centre[1]
+        relative_y = -y# - self.screen_centre[1]# - self.offset[1]
         return relative_y*self.scale + self.centre[1]
 
 
