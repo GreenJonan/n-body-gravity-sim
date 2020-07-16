@@ -1,0 +1,97 @@
+Earth, Moon & Sun System
+
+
+root {
+
+
+variables {
+    del_moon = pi  / 12
+    n = 16
+    pi_n = 2*pi/n
+    moon_speed = 29800 + 1.022e3
+    percent = 50
+}
+
+constants {
+    G: ( (6.67430e-11 ) )
+    
+    E: (1/(4*3.14159265* 8.8541878128))*(10^12)
+    R: 1
+
+    distanceError: 1
+
+    timeDelay : 1000/(40)
+    updateNumber :4
+    timeStep: (365*60*24)*((1000/(40))/1000)*((9*60+17)/(60*6*2) ) [/(1000*500)][/(1000000000*20)]
+
+    maxDistance : 1.496e11*4.5
+    WARNING: False
+
+}
+
+
+universe {
+    centre: vector {0,0}
+
+    trailHistory: True
+
+    maxSpeed: (100/percent) * moon_speed
+    [As the object approaches the speed of light, the mass increases so much that it is undeflected]
+    relativistic:
+
+
+    __nLaw:1[2.0]
+    __nMetric:[20]
+
+
+    body {
+        name: Sun
+        X: vector {0,0}
+        V: vector {10000,0}
+        mass: 1.9884e30
+        radius: 696342e3 * 16
+        colour:  colour{name:orange}
+
+        trailSkip:0
+        maxTrail:-1
+        trailColour: colour{name:white}
+    }
+    [
+    body {
+        name: Moon
+        X: vector {polar: 1.496e8*1000 + 384402e3, del_moon}
+        V: vector {polar: moon_speed, pi/2 + del_moon}
+        mass: 7.342e22
+        radius: 1737.4e3 * 16
+        colour: colour{name:grey}
+    }]
+
+    for {phi=0; phi<2*pi; phi=phi+pi_n} {
+
+    body {
+        name: Earth
+        X: vector {polar: 1.496e8*1000, phi}
+        V: vector {polar: 29800, phi+pi/2}
+        mass: 5.9722e24
+        radius: 6371e3 * 16
+        colour: colour{name:turquoise}
+        anchor:
+    }
+    }
+}
+
+
+
+screen {
+    width: 1200
+    height: 900
+
+    background: colour {name:black}
+
+    labelSize:50
+    titleSize:100
+    textColour: colour{name:black}
+    defaultMessage: "Default"
+}
+
+}

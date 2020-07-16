@@ -1,0 +1,186 @@
+Sun,Sun,Sun System
+The sun is placed at the centre of the system, and at the position of the earth, another sun is placed.
+Directly opposite it in its orbit, same distance from origin, is another Sun.
+
+Theoretically, the forces on the suns should cancel out, and the system should remain locked.
+However, due to computational errors and that the system update one body at a time, the forces become
+unbalanced over time. This is not necessarily a computational error, but an algorithmic one.
+
+Future Note: Add option to update all objects at once, rather than one by one.
+
+
+root {
+
+variables {
+    ball_angle = 0
+    magnitude = 5
+
+    ball1_vec = vector {-3,0}
+
+    [centre_vec = vector {3, 0}]
+    centre_vec = vector {0,0}
+    move_vec = vector {2,0}
+
+    pos_angle = vector {polar: 1, pi/6}
+    neg_angle = vector {polar: 1, -pi/6}
+
+    zero_vec = vector {0,0}
+
+    b0_mass = 10
+    b1_mass = 1
+    b2_mass = 1
+    b3_mass = 1
+    b4_mass = 1
+    b5_mass = 1
+    b6_mass = 1
+}
+
+constants {
+    G: 0*( (6.67430e-11 ) )
+    E: (1/(4*3.14159265* 8.8541878128))*(10^12)
+    R: 0.1
+
+    distanceError: 0.0001
+
+    timeDelay : 10[1000/(60)]
+    updateNumber :1[12]
+    timeStep: 2[1 * ((3*60+30)/6000)]  [velocity=1  ==> ~1m/s]
+
+    maxDistance : 1e1
+    controlScale: 0.5
+
+    randomSeed:10
+}
+
+
+universe {
+    centre: centre_vec
+    randomCollision: True
+    [shuffleBody: True]
+
+    boxDimensions: vector {12,8}
+
+    __nMetric: 2
+
+    control:
+
+    body {
+        name: Sinker
+        X: ball1_vec
+        V: [vector{polar: magnitude, pi*ball_angle/180}] zero_vec
+        mass: b0_mass
+        radius: 0.5
+        colour: colour{name:white}
+        collide:
+
+        trailColour: colour{name:white}
+        maxTrail: 1000
+        drag:True
+    }
+
+
+    body {
+        name: Ball 1
+        X: centre_vec + move_vec
+        V: zero_vec
+        mass: b1_mass
+        radius: 0.5
+        colour: colour{name:lime}
+        collide:
+
+        trailColour: colour{name:lime}
+        maxTrail: 1000
+        drag:True
+    }
+
+    body {
+        name: Ball 2
+        X: centre_vec + pos_angle + move_vec
+        V: zero_vec
+        mass: b2_mass
+        radius: 0.5
+        colour: colour{name:red}
+        collide:
+        elasticity: 1
+
+        trailColour: colour{name:red}
+        maxTrail: 1000
+        drag:True
+    }
+
+    body {
+        name: Ball 3
+        X: centre_vec + neg_angle + move_vec
+        V: zero_vec
+        mass: b3_mass
+        radius: 0.5
+        colour: colour{name:yellow}
+        collide:
+        elasticity: 1
+
+        trailColour: colour{name:yellow}
+        maxTrail: 1000
+        drag:True
+    }
+
+    body {
+        name: Ball 4
+        X: centre_vec + 2*pos_angle + move_vec
+        V: zero_vec
+        mass: b4_mass
+        radius: 0.5
+        colour: colour{name:turquoise}
+        collide:
+
+        trailColour: colour{name:turquoise}
+        maxTrail: 1000
+        drag:True
+    }
+
+    body {
+        name: Ball 5
+        X: centre_vec + 2*neg_angle + move_vec
+        V: zero_vec
+        mass: b5_mass
+        radius: 0.5
+        colour: colour{name:magenta}
+        collide:
+        elasticity: 1
+
+        trailColour: colour{name:magenta}
+        maxTrail: 1000
+        drag:True
+    }
+
+    body {
+        name: Ball 6
+        X: centre_vec + pos_angle + neg_angle + move_vec
+        V: zero_vec
+        mass: b6_mass
+        radius: 0.5
+        colour: colour{name:orange}
+        collide:
+        elasticity: 1
+
+        trailColour: colour{name:orange}
+        maxTrail: 1000
+        drag:True
+    }
+
+}
+
+
+
+screen {
+    width: 1200
+    height: 900
+
+    background: colour {name:black}
+
+    labelSize:50
+    titleSize:100
+    textColour: colour{name:black}
+    defaultMessage: "Default:"
+}
+
+}

@@ -1,0 +1,78 @@
+Sun,Sun,Sun System
+The sun is placed at the centre of the system, and at the position of the earth, another sun is placed.
+Directly opposite it in its orbit, same distance from origin, is another Sun.
+
+Theoretically, the forces on the suns should cancel out, and the system should remain locked.
+However, due to computational errors and that the system update one body at a time, the forces become
+unbalanced over time. This is not necessarily a computational error, but an algorithmic one.
+
+Future Note: Add option to update all objects at once, rather than one by one.
+
+
+root {
+
+variables {
+    time_delay = 1000/(60)
+    second = 1
+    degree = 45
+    angle = degree*pi/180
+}
+
+constants {
+    G: ( (6.67430e-11 ) )
+    E: (1/(4*3.14159265* 8.8541878128))*(10^12)
+    R: 0.01
+
+    distanceError: 1
+
+    timeDelay : time_delay
+    updateNumber :12
+    timeStep: second*(time_delay/1000)
+
+    maxDistance : 12*3[256*64*2] [1.496e11*4.5]
+}
+
+
+universe {
+    centre: vector {polar:6.371e6, angle}
+    trailHistory:
+
+    body {
+        name: Earth
+        X: vector {0,0}
+        V: vector {0, 0}
+        mass: 5.97237e24
+        radius: 6.371e6
+        colour: colour{name:lime}
+        collide:
+    }
+
+    body {
+        name: Tennis Ball
+        X: vector {polar:6.371e6+ 10, angle}
+        V: vector {-50, 0}
+        mass: 1
+        radius: 0.5
+        colour: colour{name:yellow}
+        collide:
+        elasticity: 0.3
+        maxTrail: -1
+        [drag: True]
+    }
+}
+
+
+
+screen {
+    width: 1200
+    height: 900
+
+    background: colour {name:black}
+
+    labelSize:50
+    titleSize:100
+    textColour: colour{name:black}
+    defaultMessage: "Default:"
+}
+
+}
