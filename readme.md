@@ -9,13 +9,16 @@
 This project is a numerical simulation of the motion of objects given Newtonian forces acting on them.
 The project is implemented in Python.
 
+Each body is updated over a small time step. The bodies are updated one by one, that is the gravitational fields and so forth changes everytime a body is updated per time step, rather than static.
+
+
 ### Forces ###
 The following forces that act on the bodies are,
 
  - [x] Gravity 
  - [x] Electric
  - [x] Linear Momentum Collision
- - [x] Crude all-body Drag
+ - [x] All-body Drag
 
 
 The forces in general are inverse square laws,
@@ -34,10 +37,10 @@ The motion of the objects is calculated via ~~Euler~~ Runge-Kutte-4 Method, and 
 
 Please refer to [OrbitRungeKutta4.pdf](http://spiff.rit.edu/richmond/nbody/OrbitRungeKutta4.pdf) for more information.
 
-F(x,v) = F_G + F_E
+F(x,v) = F_G + F_E + F_D
 
 
-All objects are updated one by one. That is update a body, then the next body is updated using the new information of the body previously updated, not it's origin position.
+All objects are updated one by one. That is update a body, say body A,  then body B is updated using the new information of body A rather than body A's original information.
 
 
 
@@ -55,8 +58,30 @@ Currently, all objects/shapes are passed to pygame to draw, and are drawn only i
 
 
 
-Objects can retail their spatial history in the form of trails. Activating this requires trailHistory:True in the input .sys file, and the trail number for each body object must be large enough that the trails are visible. The trails will be computed with their positions relative to the central object in which they are activated.
+### Trails ###
 
+
+Objects can retail their spatial history in the form of trails. Activating this requires trailHistory:True in the input .sys file, and the trail number for each body object must be large enough that the trails are visible. 
+The trails will be computed with their positions relative to the central object in which they are activated. That is, if the trails are activated while viewing say the earth, then then the moon will appear to move in circles around the earth, however, if it is activated while viewing the sun, the moon will appear to move in pseudo-circles around the sun.
+
+
+### Camera ###
+
+It is possible to zoom in and out of objects by pressing the up/down arrow keys. Moreover, the left/right arrow keys toggles between what the screen focuses on, in terms of bodies.
+
+
+When 'p' is pressed, panning is activiated, this is possible when the simulation is paused and when the bodies are being incremented.
+When the screen is clicked, and the mouse is dragged, the screen moves along side it.
+When zooming in and out, the position that the camera had at it's centre remains at the centre of the screen.
+
+
+### Large Objects ###
+
+When a body is extremely large and is still visible on the screen, it's surface is approximated as a linear line, and the interior area between this line and the centre of the body is filled in. Likewise, when the body overlaps the screen, but neither it's centre nor surface is visible on the screen, the screen is filled with the colour of the obejct.
+
+These points are solved for by representing the screen as a rectangle, and the rectangle as a set of lines with inequalities. It is then possible to solve for points of intersection with the circle and these lines.
+
+The reason for this approximation is the fact that it is possible for pygame to experience an Overflow error when the radius/centre points of the body is too large.
 
 
 ## Collisions ##
@@ -86,14 +111,14 @@ An alterante method is to update the velocity of B,C using conservation of momen
 These are the files which the program reads, parses and constucts a system of bodies. These are custom file types that are text documents.
 They are constructed by nested objects with attibutes. Consider the following example,
 
-`
+```
 Object {
     attribute: value
     attribute2:sub_object {
         subsub_object{}
     }
 }
-`
+```
 
 In addition, they support maths operations, variables and for loops.
 
@@ -112,6 +137,8 @@ For the more information about the objects, attributes, and syntax, please look 
  - [x] Ability to load arbitrary mass/charge systems  ==>  need to implement a parser.
  - [x] Trails - lifetime trails & previous N steps.
  - [ ] Multithreading.
+ - [ ] Magnetic field force
+ - [ ] Relativistic collisions
 
 
 

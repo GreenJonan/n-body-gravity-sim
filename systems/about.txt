@@ -1,77 +1,162 @@
 FILE.sys is a file containing information about a system with the following format:
 
 Comment out information using [comment] syntax.  Multiple comments can be placed inside one another.
-
 General comments can be made outside the FILE{} object syntax.
 
-TO-DOs are indicated by #
 
 Names-Values are read verbatim when “key:val” is used, that is quote notation. The parser interprets this as (‘’,’key:val’), rather than (‘key’, ‘val’) as with key:val.
 
 
-OBJECT {
-	Properties of object
-}
+
+This is the general syntax of .sys files
+
+   OBJECT {
+   	   attribute: value
+   }
+
+Variables are specified by,
+
+   variable = value
+
+White space can exist between ‘{‘, ’:’, and ’=‘ characters, names and mathematical symbols.
+By default ‘;’ characters indicate ‘new-sentence’ for the parser to interpretative, however, while parsing, the program converts all new line characters into semicolons, meaning they are not necessary.
 
 
-The following objects are:
+
+To begin the document, the opening object must be a root {} object.
 
 root {
 
+
+variables {
+
+	name = value
+
+	name = vector {x1 value, .., xn value}
+	name = vector {cartesian: x1 value, .., xn value}
+	name = vector {polar: radius value, angle1 value, .., angle(n-1) value}
+
+	name = colour {r,g,b}
+	name = colour {rgb: r,g,b}
+	name = colour {name: name} [specify colour by name, e.g. black]
+
+}
+
+
+
+for {i=0,i<1,i=i+1} { main loop }
+
+
+
 constants {
-	G:value;
-	E:value
+	G: value  [Gravity constant, default = 6.67430e-11]
+	E: value  [Electricity constant, default = (1/(4*pi*8.8541878128*10^-12))] 
+	R: value  [Drag constant, default = 1]
 
-	distanceError:value
+	distanceError: value
 
-	timeDelay:value
-	updateNumber:value
-	timeStep:value;
-	;
-	[obj :vector {1+(1+4)*2*2^(3e-2) }]
+	timeDelay: value
+	updateNumber: value
+	timeStep: value
+
+	maxDistance: value [distance corresponds to the shortest side of the screen]
+
+	WARNING: Bool [verbatim print warning string, currently only to console]
+	randomSeed: value [seed for random number generator, default=current_time]
+	
 }
 
 
 
 universe {
-	dimension:value
-	centre : vector{3e-2}
-	resistance:bool
-	(HI:BYE)
-	conserveEnergy:bool
+	dimension: integerValue [Used to implicitly set centre of universe if not given]
+	centre: vector {} [default centre of the universe]
+
+	resistance: Bool [Apply drag resistance to all bodies]
+	conserveEnergy: Bool [NotImplemented]
+
+	maxSpeed: Value [All bodies are adjusted to be at most this speed]
+	relativistic: Bool [Forces are adjusted based on relativistic principles, momentum collision is not implemented.]
+
+	trailHistory: Bool [By default draw tails]
+
+	boxDimensions: vector {x1_width, .., xn_width}
+	wallCollision: Bool [Turn on wall collision for all bodies]
+
+	control: Bool [Enable object control/momentum injection by pressing ‘c’]
+	controlScale: Value [Modify proportion constant for  momentum injection]
+
+	__nLaw: value [change from -2 law (inverse square), to inverse __nlaw]
+	__nMetric: value [change from d=(x^2+…+y^2)^1/2, to d=(x^n+…+y^n)^1/n. Vector inner product remains as standard inner product (dot-product)]
+
+	randomCollision: Bool [When a body collides with multiple bodies, update momentum randomly]
+	shuffleBody: Bool [For every time step iteration, shuffle the order in which the bodies are updated.]
+	assertError: Bool [Currently disabled. Make assert statements]
+
+
 	
-	body {
-		X: vector {0,0,0}
-		V : vector{0,0,0}
-
-		mass:value
-		charge:value
-		radius:value
-
-		colour:colour {1,2,3}
-		name:string
-		
-		body { string }
-	}
+	body {} [first body]
+	body {} [second body]
 	
-	body{
-	}
+}
+
+body {
+	name: string [Name of object]
+
+	X: vector {x1_0,..,xn_0}
+	V: vector {v1_0,..,vn_0}
+	mass: value
+	charge: value
+	radius: value
+
+	anchor: Bool [If anchor, the position of the object is never updated]
+
+	maxTrail: integer value [Maximum length of trail/position history, default=-1. -1 ==> infinite/no maximums]
+	trailSkip: Integer Value [Number of history elements that are skipped over when drawing the trail.]
+	trailColour: colour
+
+	collide: Bool [Allowed to collide with other objects]
+	elasticity: value [For collisions, 0 ==> inelastic, 1 ==> elastic]
+
+	drag: Bool [Object experiences drag]
 }
 
 
-#screen {
-	width:value
-	height:value
-	scale:value
+screen {
+	width: integer value [width in pixels, default=1200]
+	height: integer value [height in pixels, default=900]
+	scale: value [Scale, 1m = x pixels, automatically calculated with maxDistance]
 
-	background:colour
+	background: colour {} [Colour of background colour, default=black]
+
+	defaultMessage: string [Message that will display in top left corner by default]
+
+	textColour: colour {} [Colour of all text]
+
+	labelSize: integer value [Font size of label text]
+	titleSize: integer value [Font size of title text]
 }
 
 }
 
 
 
-Note that, the order in which the names are specified is not important, nor is any extra white space (more than one space).
+
+Supported Colours:
+
+black, red, green, blue
+
+yellow, turquoise, magenta
+
+purple, mid_blue, orange, dark_pink, yellow_green, lime
+
+light_blue, grey
+
+
+
+
+
+Note that, the order in which the names are specified is not important, nor is any extra white space.
 
 
 It is also possible to compute basic numeric operations:
@@ -81,9 +166,6 @@ It is also possible to compute basic numeric operations:
  Multiplication: *
  Division:       /
  Exponentiation: ^
- #Modulus:        %
+ Inequalities:   <,>,<=,>=
+ Negation:       ~
 
-
-The following units are supported:
-
- #au (Astronomical Unit)
