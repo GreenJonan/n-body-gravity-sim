@@ -111,17 +111,10 @@ class ParseTree:
         i = 0
         while i < N:
             tmp_ls = self.children[i].objectify(variables, parent_name)
-            """
-            if len(tmp_ls) > 1:
-                # there is no reason the lists shouldn't be length 1
-                raise ValueError("\nStack Trace: {0}\nIncorrectly objectified child objects. '{1}'"\
-                                 .format(parent_name, tmp_ls))
             
-            ls[i] = tmp_ls[0]
-            """
             n = len(tmp_ls)
             if n == 0:
-                raise ValueError("\nStack Trace: {0}\nIncorrectly objectified child objects. '{1}'"\
+                raise ValueError("\nStack Trace: {0}\nIncorrectly objectified child objects.\n '{1}'"\
                                  .format(parent_name, tmp_ls))
             
             j = 1
@@ -191,7 +184,7 @@ class ParseTree:
             return [ objects.parse_colour(self.strings, my_name, variables) ]
     
         else:
-            raise TypeError("\nStack Trace: {0}\nUnknown Object type '{1}' in system file: {2}"\
+            raise TypeError("\nStack Trace: {0}\nUnknown Object type '{1}'\n in system file: {2}"\
                             .format(parent_name, self.name, self.fileName))
     
 
@@ -270,7 +263,7 @@ def parse_file_section(f, parse_root:ParseTree):  #object_name=""):
         c = f.read(1)
         if c == "":
             cont = False
-            raise SyntaxError("\nInvalid formatting of file. Require '}}' to close object type '{0}'."\
+            raise SyntaxError("\nInvalid formatting of file.\nRequire '}}' to close object type '{0}'."\
                             .format(parse_root.name))
         else:
             # read file char

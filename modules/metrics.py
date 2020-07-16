@@ -23,13 +23,24 @@ Note:
 from modules import vector as v
 from modules import constants
 
+import sys
+
 Vec = v.Vector
 
 
 
 
-def unit_vector(v:Vec, metric=2):
+def unit_vector(v:Vec, metric=2, error=True):
     length = metric_norm(v, metric)
+    
+    #try:
+    #length = metric_norm(v, metric)
+    #except OverflowError:
+    #    if error:
+    #        print("Float Overflow Error occured while calculating unit vector.")
+    #    new_vec = v / sys.maxsize
+    #    return unit_vector(new_vec, metric, False)
+
     if length == 0:
         return v
     else:

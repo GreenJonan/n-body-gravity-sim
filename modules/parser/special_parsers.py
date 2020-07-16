@@ -163,7 +163,7 @@ def parse_key_values(string:str, parent_name:str, sep=':', num = -1):
                         e = string[j]
                 ending = j
                 
-                raise SyntaxError("\nStack Trace: {0}\nInvalid use of keyword value pairs. Cannot place multiple 'keyword:value' instances within one code section.\n'{1}'"\
+                raise SyntaxError("\nStack Trace: {0}\nInvalid use of keyword value pairs.\n Cannot place multiple 'keyword:value' instances within one code section.\n'{1}'"\
                                   .format(parent_name, string[beggining:ending]))
                 ######
                 
@@ -527,7 +527,7 @@ class MathList:
         
             
             if pointer == None:
-                raise TypeError("Error parsing Maths String: {0}".format(parent_name))
+                raise TypeError("\nError parsing Maths String: {0}\nGiven None pointer.".format(parent_name))
             
             elif pointer.next == end_pointer:
                 val = pointer.value

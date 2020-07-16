@@ -114,14 +114,14 @@ class UniverseScreen:
         """
         
         if len(projection) != 2:
-            raise ValueError("Error: Length of projection values is not 2, instead {0}".format(len(projection)))
+            raise ValueError("Error: Length of projection values is {0}, not 2.".format(len(projection)))
         proj_x = projection[0]
         proj_y = projection[1]
             
         if proj_x < 0 or proj_x >= len(U.centre):
-            raise ValueError("Error: Invalid vector component: {0}".format(proj_x))
+            raise ValueError("Invalid vector component: {0}".format(proj_x))
         if proj_y < 0 or proj_y >= len(U.centre):
-            raise ValueError("Error: Invalid vector component: {0}".format(proj_y))
+            raise ValueError("Invalid vector component: {0}".format(proj_y))
 
         self.proj = (proj_x,proj_y)
         return self.proj
@@ -151,7 +151,7 @@ class UniverseScreen:
         Given a vector, find the
         """
         if self.proj == None:
-            raise ValueError("Error: UniverseScreen projection axes not updated.")
+            raise ValueError("UniverseScreen projection axes not updated.")
         
         proj_x = self.proj[0]
         proj_y = self.proj[1]
@@ -553,19 +553,34 @@ class UniverseScreen:
     def write_message(self, text:str, font_size:int=12, centre=(True,True),
                       text_colour:tuple=col.black, background_colour=None):
         
-        text_screen = self.message(text, font_size, text_colour, background_colour)
-
-        text_width = text_screen.get_width()
-        text_height = text_screen.get_height()
+        phrases = text.split("\n")
         
-        x,y = 0,0
+        tmp_screen = self.message("", font_size, text_colour, None)
+        template_height = tmp_screen.get_height()
+        
+        total_height = len(phrases) * template_height
+        
+        screen_x, screen_y = self.screen_centre
         centre_x, centre_y = centre
-        if centre_x:
-            x = int(self.screen_centre[0] - (text_width/2))
-        if centre_y:
-            y = int(self.screen_centre[1] - (text_height/2))
         
-        self.screen.blit(text_screen, (x,y))
+        y = 0
+        if centre_y:
+            y = int(screen_y - total_height/2)
+        
+        for phrase in phrases:
+            text_screen = self.message(phrase, font_size, text_colour, background_colour)
+
+            text_width = text_screen.get_width()
+            text_height = text_screen.get_height()
+        
+            x=0
+            if centre_x:
+                x += int(screen_x - (text_width/2))
+            
+
+            self.screen.blit(text_screen, (x,y))
+            y += int(text_height)
+        return
 
 
 
@@ -587,6 +602,8 @@ class UniverseScreen:
 
         self.write_message(text, font_size=self.title_size, centre=(True,True), text_colour=self.text_colour,
                            background_colour=back_colour)
+
+
 
 
 

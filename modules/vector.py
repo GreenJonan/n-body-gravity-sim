@@ -27,7 +27,7 @@ class Vector:
            :return: float or integer.
         """
         if not isinstance(other, Vector):
-            raise ValueError("Error: {} is not a vector object, cannot compute inner product.".format(other))
+            raise ValueError("{0} is not a vector object\ncannot compute inner product.".format(other))
         elif Vector.vector_len_error(self, other):
             pass
         else:
@@ -59,7 +59,7 @@ class Vector:
             Overload addition operation. Add two vectors together component wise.
         """
         if not isinstance(other, Vector):
-            raise ValueError("Error: Cannot add {0} type to {1} type.".format(type(other), type(self)))
+            raise ValueError("Cannot add {0} type to {1} type.".format(type(other), type(self)))
         elif Vector.vector_len_error(self, other):
             pass
         else:
@@ -99,7 +99,7 @@ class Vector:
             return Vector(tmp)
 
         else:
-            raise ValueError("Error: cannot multiply {0} type and {1} type.".format(type(self), type(other)))
+            raise ValueError("cannot multiply {0} type and {1} type.".format(type(self), type(other)))
 
     def __rmul__(self, other):
         # other * self
@@ -150,7 +150,7 @@ class Vector:
     @staticmethod
     def zero_vector(dim:int):
         if dim < 1:
-            raise ValueError("Error: Vector dimension undefined for dim={0}".format(dim))
+            raise ValueError("Vector dimension undefined for dim={0}".format(dim))
         return Vector([0] * dim)
 
 
@@ -188,7 +188,7 @@ class Vector:
         Generate a vector with dimension :dim: and components from [0,1]
         """
         if dim <= 0:
-            raise ValueError("Error: Vector dimension not implemented for: dim = {0}".format(dim))
+            raise ValueError("Vector dimension undefined for: dim = {0}".format(dim))
         else:
             vec = [0] * dim
             i = 0
@@ -228,7 +228,7 @@ class Vector:
     def vector_len_error(v1,v2):
         # assume inputs are vectors
         if len(v1) != len(v2):
-            raise ValueError("Error: Vectors of different dimension cannot be added together; dim {0} and dim {1}".format(len(v1), len(v2)))
+            raise ValueError("Vectors of different dimension cannot be added together; dim {0} and dim {1}".format(len(v1), len(v2)))
             return True
         else:
             return False

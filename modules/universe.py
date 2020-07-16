@@ -19,6 +19,8 @@ from modules import utility
 
 import math,sys
 
+max_size = sys.maxsize / 100
+
 
 
 class Universe:
@@ -86,7 +88,7 @@ class Universe:
     
     def conserve_universe_energy(self):
         if self.resistance:
-            raise ValueError("Error: Cannot conserve total energy while not-conservative forces are active.")
+            raise ValueError("Cannot conserve total energy while not-conservative forces are active.")
         self.conserve_energy = True
 
 
@@ -96,7 +98,7 @@ class Universe:
     def get_centre_of_mass(self):
         N = len(self.bodies)
         if N == 0:
-            raise ValueError("Error: Unable to compute Centre of Mass, no Objects in Universe.")
+            raise ValueError("Unable to compute Centre of Mass.\nNo Objects in Universe.")
     
         n = len(self.centre)
         weighted_centre = vector.Vector.zero_vector(n)
@@ -188,7 +190,7 @@ class Universe:
         """
         bod = self.get_body(body_id)
         if bod == None:
-            raise TypeError("Error: Cannot compute gravity force for None Object.")
+            raise TypeError("Cannot compute gravity force for None Object.")
 
         return bod.mass * self.net_gravity_field(body_id, X, g_const, dist_error)
 
@@ -199,7 +201,7 @@ class Universe:
         """
         bod = self.get_body(body_id)
         if bod == None:
-            raise TypeError("Error: Cannot compute gravity force for None Object.")
+            raise TypeError("Cannot compute electric force for None Object.")
                         
         return bod.charge * self.net_electric_field(body_id, X, e_const, dist_error)
 
@@ -292,12 +294,27 @@ class Universe:
 
         obj.V = new_v
 
-        
+
+        del_x_unit = metrics.unit_vector(del_x)
+        #del_x_len = 0
+        #try:
+        del_x_len = metrics.metric_norm(del_x, self._nmetric)
+        #except OverflowError:
+        #print("Float OverflowError occured while calculating vector normal in 'runge_kutta_method' function.")
+        #del_x_len = max_size
+
+
+        # source of error: check ball collisions before checking wall colliisions.
+        # if a ball if stuck inside a wall, then it will first check whether it collides with another wall,
+        # rather than the wall it is stuck inside.
+
+
         # see if body collides with other bodies
-        collision, other_bodies, del_x = self.check_collision(obj, del_x)
+        collision, other_bodies, del_x = self.check_collision(obj, del_x_unit, del_x_len)
         update = True
 
         if collision:
+            #print(other_bodies)
             self.multi_momentum_collision(obj, other_bodies, random=self.random)
         
         else:
@@ -422,14 +439,21 @@ class Universe:
     # speed limit
     
     def correct_velocity(self, V, warning):
-        # SOURCE OF POTENTIAL ERRORS: del_x may not correct in runge-kutta method.
+        # SOURCE OF POTENTIAL ERRORS: momentum collisions may increase velocity.
+        
+        #v = 0
+        #try:
+        #    v = metrics.metric_norm(V, self._nmetric)
+        #except OverflowError:
+        #    v = max_size
+        #    print("Float Overflow error occured while calculating vector norm in 'correct_velocity' function.")
+        #    V = metrics.unit_vector(V, self._nmetric, error=False) * v
+        
+        
         c = self.max_speed
         if self.max_speed >= 0:
-            v = 0
-            if self._nmetric == 2:
-                v = V.norm()
-            else:
-                v = metrics.metric_norm(V,self._nmetric)
+            v = metrics.metric_norm(V, self._nmetric)
+            
             if v > c:
                 c_v = (c/v)
                 if c_v * v > 1.0:
@@ -486,7 +510,7 @@ class Universe:
             
             if self._nmetric != 2 and not warning:
                 print("Warning: Inner product is ill defined for other non-euclidean metrics.")
-            force = force - metrics.metic_inner_product(V,force, self._nmetric) *V / (c_sqr)
+            force = force - metrics.metric_inner_product(V,force, self._nmetric) *V / (c_sqr)
         return force/mass
 
 
@@ -510,7 +534,7 @@ class Universe:
                     bod.V = tmp_V
                     bod.V_prev = tmp_V
         elif self.relativistic:
-            raise ValueError("\nUniverse set to relativistic, however, there exists no valid positive universal speed limit.")
+            raise ValueError("\nUniverse set to relativistic, however,\n there exists no valid positive universal speed limit.")
         return
 
 
@@ -831,29 +855,27 @@ class Universe:
 
 
 
-    def check_collision(self, bod:body.Body, del_x:vector.Vector):
+    def check_collision(self, bod:body.Body, del_x_unit:vector.Vector, del_x_len:float):
         """
         Check whether any objects collide.
         """
         
         collided = False
         min_length = -1
-        results = []
+        results = [None]*0
         
-        new_delta_x = del_x
+        
+        del_x = del_x_unit * del_x_len
+        new_delta_x = None
         msg = ""
         
         if bod.can_collide:
-            del_x_len = metrics.metric_norm(del_x, self._nmetric)
-            del_x_unit = None
         
             if del_x_len <= 0:
                 # if del_x is a zero vector, then checking for collision is the same as colliding,
                 # for both cases the object doesn't move.
                 pass
             else:
-                
-                del_x_unit = del_x / del_x_len
         
                 for other_body in self.bodies:
                     collision = False
@@ -861,6 +883,8 @@ class Universe:
                     if isinstance(other_body, body.Body):
                         if other_body.id != bod.id:
                             if other_body.can_collide:
+                
+                                difference = None
                 
                                 # see if the two bodies will collide.
                                 # if so, change the positions & velocities.
@@ -918,6 +942,7 @@ class Universe:
                                         #msg = ""
                                         min_length = moving_towards_projection
                                         results = [other_body]
+                                    
                                     else:
                                         #msg += ", and "
                                         # this means the object has collided with multiple bodies
@@ -926,8 +951,11 @@ class Universe:
                                     #msg += bod.name + " collided with " +  other_body.name
                                     if not collided:
                                         collided = True
+                                    
                                         new_delta_x = vector.Vector.zero_vector(len(del_x))
-        #print(msg)
+    
+        if not collided:
+            new_delta_x = del_x
         return collided, results, new_delta_x
 
 

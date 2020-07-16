@@ -12,7 +12,7 @@ from modules import colour
 #import constants
 #import colour
 
-import math
+import math,sys
 
 
 class Body:
@@ -126,13 +126,19 @@ class Body:
         return self.charge * uni.net_electric_field(self.id)
     """
     
-    def resistance_force(self, vel:vector.Vector, R_const, laws=None):
+    def resistance_force(self, vel:vector.Vector, R_const, laws=None, viscous=True):
         """
-        v^@ ==> viscous fluid, v^1 ==> non-viscous
+        v^2 ==> viscous fluid, v^1 ==> non-viscous
         """
         # F = -R*A*v^2
-        
-        v = metrics.metric_norm(vel, laws[1])
+        v = 1
+        if viscous:
+            v = metrics.metric_norm(vel, laws[1])
+            #try:
+            #
+            #except OverflowError:
+            #    print("Float Overflow Error occured while calculating vector normal in 'resistance_force' function.")
+            #    v = sys.maxsize
         
         area = self.radius * self.radius * math.pi
         return  - R_const * area * v * vel

@@ -157,7 +157,7 @@ def parse_forloop(strings:list, parent_name:str, children, variables:dict):
     # format parsing
     parts = args.split(";")
     if len(parts) != 3:
-        raise SyntaxError("\nStack Trace: {0}\Invalid number of parameters in for loop, require three.\n '{1}'"\
+        raise SyntaxError("\nStack Trace: {0}\Invalid number of parameters in 'for' loop object.\nRequire three.\n '{1}'"\
                             .format(parent_name, args))
 
     start_str = parts[0]
@@ -224,7 +224,7 @@ def parse_vector(strings:list, parent_name:str, variables:dict):
     key_values = parse.parse_key_values(string, parent_name)
     
     if len(key_values) != 1:
-        raise ValueError("\nFile Trace: {0}\nInvalid number of Vector attributes: {1}"\
+        raise ValueError("\nFile Trace: {0}\nInvalid number of Vector attributes:\n '{1}'"\
                          .format(parent_name, string))
     else:
         name = key_values[0][0]
@@ -276,7 +276,7 @@ def parse_colour(strings:list, parent_name:str, variables:dict):
     colours = parse.parse_key_values(string, parent_name)
     
     if len(colours) != 1:
-        raise ValueError("\nFile Trace: {0}\nInvalid number of colour attributes: {1}".format(parent_name, string))
+        raise ValueError("\nFile Trace: {0}\nInvalid number of colour attributes:\n {1}".format(parent_name, string))
     else:
         name = colours[0][0]
         value = colours[0][1]
@@ -298,7 +298,7 @@ def parse_colour(strings:list, parent_name:str, variables:dict):
 
         if name == "" or name == rgb_str:
             if len(cols) != 3:
-                raise ValueError("\nStack Trace: {0}\nInvalid rgb colour length, string: '{1}'"\
+                raise ValueError("\nStack Trace: {0}\nInvalid rgb colour length\n string: '{1}'"\
                                  .format(parent_name, value))
             else:
                 return tuple(vec)
@@ -390,7 +390,7 @@ def parse_constants(strings:list, parent_name:str, variables:dict):
 
 
             if err:
-                raise SyntaxError("\nStack Trace: {0}\nNo Attribute corresponds with the string '{1}'"\
+                raise SyntaxError("\nStack Trace: {0}\nNo Attribute corresponds to\nString: '{1}'"\
                                   .format(parent_name, value))
             else:
                 var = line_eqs[0]
@@ -553,7 +553,7 @@ def parse_universe(strings:list, children_obj, parent_name:str, variables:dict):
                 err = True
             
             if err:
-                raise SyntaxError("\nStack Trace: {0}\nNo Attribute corresponds with the string '{1}'"\
+                raise SyntaxError("\nStack Trace: {0}\nNo Attribute corresponds to\nString: '{1}'"\
                                   .format(parent_name, value))
             else:
                 var = line_eqs[0]
@@ -700,7 +700,7 @@ def parse_body(strings:list, child_obj:list, parent_name:str, variables:dict):
                 err = True
             
             if err:
-                raise SyntaxError("\nStack Trace: {0}\nNo Attribute corresponds with the string '{1}'"\
+                raise SyntaxError("\nStack Trace: {0}\nNo Attribute corresponds to\nString: '{1}'"\
                                   .format(parent_name, value))
             else:
                 var = line_eqs[0]
@@ -817,7 +817,7 @@ def parse_screen(strings:list, child_obj:list, parent_name, variables:dict):
                 err = True
             
             if err:
-                raise SyntaxError("\nStack Trace: {0}\nNo Attribute corresponds with the string '{1}'"\
+                raise SyntaxError("\nStack Trace: {0}\nNo Attribute corresponds to\nString: '{1}'"\
                                   .format(parent_name, value))
             else:
                 var = line_eqs[0]
@@ -860,7 +860,7 @@ def get_subobject(value:str, ls:list, parent_name:str, variables:dict):
                 err = True
 
     if err:
-        raise SyntaxError("\nStack Trace: {0}\nIncorrectly parsed Object string '{1}'"\
+        raise SyntaxError("\nStack Trace: {0}\nIncorrectly parsed Object string\n '{1}'"\
                           .format(parent_name, value))
 
     return val
@@ -871,7 +871,7 @@ def get_vector_key_value(value:str, ls:list, parent_name:str, variables:dict):
     vec = get_subobject(value, ls, parent_name + ">vector", variables)
 
     if not isinstance(vec, vector.Vector):
-        raise TypeError("\nStack Trace: {0}\nVector subvalue is non-vector, type: '{1}'\n '{2}'"\
+        raise TypeError("\nStack Trace: {0}\nVector subvalue is non-vector\n type: '{1}'\n '{2}'"\
                         .format(parent_name, type(vec), vec))
     else:
         return vec
@@ -882,8 +882,8 @@ def get_vector_key_value(value:str, ls:list, parent_name:str, variables:dict):
 def get_colour_key_value(value:str, ls:list, parent_name:str, variables:dict):
     colour_val = get_subobject(value, ls, parent_name + ">colour", variables)
     if not isinstance(colour_val, tuple):
-        raise TypeError("\nStack Trace: {0}\nColour subvalue is non-tuple, type: '{1}'"\
-                        .format(parent_name, colour_val))
+        raise TypeError("\nStack Trace: {0}\nColour subvalue is non-tuple\n type: '{1}'\n type: '{2}'"\
+                        .format(parent_name, type(colour_val),colour_val))
     else:
         return colour_val
 
@@ -903,5 +903,5 @@ def get_bool(value:str, parent_name):
 
 
 def param_error(parent_name:str, params:list, max_params):
-    raise SyntaxError("\nStack Trace: {0}\nInvalid number of variables, '{1}'\n Maximum is {2}."\
+    raise SyntaxError("\nStack Trace: {0}\nInvalid number of variables\n '{1}'\n Maximum is {2}."\
                       .format(parent_name, params, max_params))
